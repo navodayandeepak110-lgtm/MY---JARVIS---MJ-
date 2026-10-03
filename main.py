@@ -97,3 +97,28 @@ class _CompatTaskGroup:
 
     async def __aenter__(self):
         return self
+
+    def create_task(self, coro):
+        task = asyncio.create_task(coro)
+        self._tasks.append(task)
+        return task
+
+    async def __aexit__(self, exc_type, exc, tb):
+        if exc is not None:
+            for task in self._tasks:
+                task.cancel()
+            await asyncio.gather(*self._tasks, return_exceptions=True)
+            return False
+
+        done, pending = await asyncio.wait(
+            self._tasks, return_when=asyncio.FIRST_EXCEPTION
+        )
+        for task in pending:
+            task.cancel()
+        await asyncio.gather(*pending, return_exceptions=True)
+        for task in done:
+            task.result()
+        return False
+
+
+_TaskGroup = getattr(asyncio, "TaskGroup", _CompatTaskGroup)
