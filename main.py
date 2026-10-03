@@ -31,3 +31,22 @@ for _stream in ("stdout", "stderr"):
             _s.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass          # pythonw / redirected pipes / anything exotic — never fatal
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+import asyncio
+import builtins
+import re
+import threading
+import time
+import json
+import sys
+import traceback
+from datetime import datetime
+from pathlib import Path
+
+import sounddevice as sd
+import numpy as np
+from google import genai
+from google.genai import types
+from ui import JarvisUI
