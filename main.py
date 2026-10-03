@@ -50,3 +50,37 @@ import numpy as np
 from google import genai
 from google.genai import types
 from ui import JarvisUI
+from memory.memory_manager import (
+    load_memory, update_memory, format_memory_for_prompt,
+    save_session_summary, pop_last_session,
+    search_memory, set_trim_notifier,
+)
+
+# The file-backed tools (open_app, web_search, browser_control, …) are no longer
+# imported or declared here — they self-describe via a TOOL dict in their own
+# actions/*.py file and are auto-discovered by core.action_loader at startup.
+# Only tools that are tied to live-session state stay inline in this file
+# (screen_process, close_camera, save_memory, manage_monitor, shutdown_jarvis,
+# system_status).
+from actions.screen_processor  import _capture_camera, _capture_screen
+from actions.system_monitor    import SystemMonitor, get_system_status
+from actions.proactive         import ProactiveEngine
+from actions.background_monitor import (
+    add_monitor, remove_monitor, list_monitors, check_all as monitor_check_all,
+)
+from actions.web_search        import _news as _fetch_news_sync
+from memory.config_manager     import (
+    get_brief_enabled, get_media_resolution, get_proactive_audio_enabled,
+    get_push_to_talk_enabled, get_thinking_enabled, get_turn_tuning, get_voice,
+    get_wake_word_enabled, save_wake_word_enabled,    get_input_device, get_output_device,
+)
+from core.plugin_loader        import discover_plugins
+from core                      import undo as undo_stack
+from core                      import confirm as confirm_gate
+from core                      import audio_devices
+from core.action_loader        import discover_actions
+from core.echo                 import EchoGuard
+from core.viseme               import VisemeStream
+from core.wake_word            import (
+    WakeWordDetector, is_ready as wake_is_ready, install_and_download as wake_install,
+)
