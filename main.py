@@ -84,3 +84,16 @@ from core.viseme               import VisemeStream
 from core.wake_word            import (
     WakeWordDetector, is_ready as wake_is_ready, install_and_download as wake_install,
 )
+
+
+_EXCEPTION_GROUP = getattr(builtins, "BaseExceptionGroup", ())
+
+
+class _CompatTaskGroup:
+    """Small TaskGroup fallback for Python 3.10, where TaskGroup is absent."""
+
+    def __init__(self):
+        self._tasks = []
+
+    async def __aenter__(self):
+        return self
