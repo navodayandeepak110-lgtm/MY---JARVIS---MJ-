@@ -161,3 +161,38 @@ def _pcm_level(samples) -> float:
     if rms <= _LEVEL_FLOOR:
         return 0.0
     return min(1.0, (rms - _LEVEL_FLOOR) / (_LEVEL_FULL - _LEVEL_FLOOR))
+
+
+# ── Viseme extraction ─────────────────────────────────────────────────────────
+# The avatar's mouth used to be driven by one RMS value per ~200 ms write batch,
+# which is five updates a second averaged over a fifth of a second — it could
+# only ever flap. These read the *shape* of each 20 ms slice straight from the
+# spectrum of the audio being played, so no transcript, no forced alignment and
+# no language assumption: it works the same for Turkish and English.
+#
+# Two numbers come out. Openness tracks the first formant — F1 climbs as the jaw
+# drops, so /a/ reads open and /i/ or /u/ read closed. Width tracks the second —
+# F2 is high for spread vowels (/i/, /e/) and low for rounded ones (/u/, /o/).
+# Extra time beyond the device's reported output latency before the microphone
+# is trusted again: covers room decay and the speaker's own settling.
+_TAIL_MARGIN = 0.25
+
+_VIS_WIN = 1024        # ~43 ms analysis window at 24 kHz: enough for formants
+_VIS_HOP = 480         # 20 ms between frames, i.e. 50 shapes a second
+
+# Delay from handing the first bytes of a reply to an already-running output
+# stream to hearing them: one callback period, plus whatever the DAC adds.
+_FIRST_SOUND = CHUNK_SIZE / RECEIVE_SAMPLE_RATE      # ~43 ms
+# How far past the device's own buffer the mouth's timeline may drift before it
+# is re-anchored. The buffer is the hard limit on how much audio can be queued
+# ahead, so anything beyond it plus a margin for clock error is impossible.
+_CURSOR_SLACK = 0.15
+
+# Erring early is the safe direction. A viewer tolerates a mouth that moves
+# slightly before the sound far better than one that moves after it — the
+# broadcast limits are about 45 ms of lag against 125 ms of lead — so where
+# this is uncertain it is biased to lead.
+
+
+def _pcm_visemes(samples, sr: int = 24000):
+    """Slice a PCM block into (level, openness, width) frames, one per 20 ms.
