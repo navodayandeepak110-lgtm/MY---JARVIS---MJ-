@@ -140,3 +140,24 @@ CHANNELS            = 1
 SEND_SAMPLE_RATE    = 16000 
 RECEIVE_SAMPLE_RATE = 24000
 CHUNK_SIZE          = 1024
+
+# RMS below which 16-bit PCM is treated as room silence; above _LEVEL_FULL it
+# reads as a full-height waveform. Tuned so ordinary speech lands mid-range and
+# the bars still move for a quiet talker — language- and device-independent.
+_LEVEL_FLOOR = 60.0
+_LEVEL_FULL  = 2600.0
+
+
+def _pcm_level(samples) -> float:
+    """Map a block of int16 PCM samples to a 0.0–1.0 loudness level for the HUD
+    waveform. Returns 0.0 on empty/invalid input so it can never raise."""
+    try:
+        x = np.asarray(samples, dtype=np.float32)
+        if x.size == 0:
+            return 0.0
+        rms = float(np.sqrt(np.mean(x * x)))
+    except Exception:
+        return 0.0
+    if rms <= _LEVEL_FLOOR:
+        return 0.0
+    return min(1.0, (rms - _LEVEL_FLOOR) / (_LEVEL_FULL - _LEVEL_FLOOR))
