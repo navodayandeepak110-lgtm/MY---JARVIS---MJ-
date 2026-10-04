@@ -122,3 +122,16 @@ class _CompatTaskGroup:
 
 
 _TaskGroup = getattr(asyncio, "TaskGroup", _CompatTaskGroup)
+
+# How long the assistant stays awake with no user speech before it auto-sleeps
+# again (wake-word mode only).
+WAKE_SLEEP_TIMEOUT = 120.0   # seconds (2 minutes)
+
+def get_base_dir():
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).resolve().parent
+
+BASE_DIR        = get_base_dir()
+API_CONFIG_PATH = BASE_DIR / "config" / "api_keys.json"
+PROMPT_PATH     = BASE_DIR / "core" / "prompt.txt"
