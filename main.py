@@ -297,3 +297,25 @@ def _describe_limits(has_vision: bool, has_mic: bool) -> str:
     if has_vision:
         out.append(
             "- Your sight is not continuous. You see nothing until you call a "
+            "vision tool, and then only that single frame at that moment — you "
+            "cannot watch, monitor or notice something changing on screen.")
+    else:
+        out.append("- You have no sight at all in this build.")
+    if has_mic:
+        out.append(
+            "- You hear nothing while the microphone is muted, and you cannot "
+            "unmute it yourself.")
+    return "\n".join(out)
+
+
+def _render_prompt(template: str, values: dict) -> str:
+    """Fill {tokens} in the prompt template.
+
+    A plain replace rather than str.format: the file is meant to be edited by
+    hand, and a stray brace in someone's own wording must never take the app
+    down at startup.
+    """
+    out = template or ""
+    for key, val in values.items():
+        out = out.replace("{" + key + "}", str(val))
+    return out
