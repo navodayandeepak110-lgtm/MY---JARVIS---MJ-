@@ -335,3 +335,26 @@ def _load_system_prompt() -> str:
             "Be concise, direct, and always use the provided tools to complete tasks. "
             "Never simulate or guess results — always call the appropriate tool."
         )
+
+_CTRL_RE = re.compile(r"<ctrl\d+>", re.IGNORECASE)
+
+# Transcript chunks shorter than this may legitimately repeat ("evet, evet"),
+# so only longer ones are treated as duplicates.
+_REPEAT_MIN = 12
+
+
+def _is_repeat_chunk(txt: str, buf: list) -> bool:
+    """True if this transcript chunk has already been seen this turn.
+
+    Guards against the API re-sending the tail of a response across the several
+    turn_completes a tool-using turn produces.
+    """
+    if len(txt) < _REPEAT_MIN:
+        return bool(buf) and txt == buf[-1]
+    joined = " ".join(buf)
+    return txt in joined
+
+def _clean_transcript(text: str) -> str:    
+    text = _CTRL_RE.sub("", text)
+    text = re.sub(r"[\x00-\x08\x0b-\x1f]", "", text)
+    return text.strip()
