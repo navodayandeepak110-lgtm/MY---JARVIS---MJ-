@@ -230,3 +230,25 @@ def _pcm_visemes(samples, sr: int = 24000):
                                                     dtype=np.float32)])
             if level <= 0.0:
                 out.append((0.0, 0.0, 0.0))
+                continue
+            mag = np.abs(np.fft.rfft((seg - seg.mean()) * win))
+            f1l, f1h = float(mag[b_f1_lo].sum()), float(mag[b_f1_hi].sum())
+            f2b, f2f = float(mag[b_f2_bk].sum()), float(mag[b_f2_fr].sum())
+            hiss = float(mag[b_hiss].sum())
+
+            openness = f1h / (f1l + f1h + 1e-6)
+            width = (f2f - f2b) / (f2f + f2b + 1e-6)
+            # A wide-open jaw physically cannot purse, so openness damps width.
+            # /a/ has a low enough F2 to read as "rounded" on the bands alone;
+            # letting openness suppress the width term is what keeps an open
+            # vowel from pursing.
+            width *= (1.0 - openness) ** 0.8
+            # Fricatives are formed with a nearly closed mouth.
+            h = hiss / (f1l + f1h + f2b + f2f + hiss + 1e-6)
+            openness *= 1.0 - 0.65 * min(1.0, h * 2.5)
+            out.append((level,
+                        float(min(1.0, max(0.0, openness))),
+                        float(min(1.0, max(-1.0, width)))))
+        return out
+    except Exception:
+        return []
