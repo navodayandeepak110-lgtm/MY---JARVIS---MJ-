@@ -252,3 +252,26 @@ def _pcm_visemes(samples, sr: int = 24000):
         return out
     except Exception:
         return []
+
+
+def _describe_tools(declarations) -> str:
+    """One line per capability, straight from the live tool declarations.
+
+    Derived rather than written down: the action and plugin registries are
+    discovered at startup, so whatever the user has installed is what the model
+    is told it can do. Adding a plugin extends this by itself, and removing one
+    stops the model from claiming an ability it no longer has.
+    """
+    lines = []
+    for d in declarations or ():
+        try:
+            name = d.get("name") if isinstance(d, dict) else getattr(d, "name", None)
+            desc = (d.get("description") if isinstance(d, dict)
+                    else getattr(d, "description", "")) or ""
+        except Exception:
+            continue
+        if not name:
+            continue
+        desc = " ".join(str(desc).split())
+        lines.append(f"- {name}: {desc[:150]}" if desc else f"- {name}")
+    return "\n".join(lines)
