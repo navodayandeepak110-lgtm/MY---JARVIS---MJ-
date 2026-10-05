@@ -275,3 +275,25 @@ def _describe_tools(declarations) -> str:
         desc = " ".join(str(desc).split())
         lines.append(f"- {name}: {desc[:150]}" if desc else f"- {name}")
     return "\n".join(lines)
+
+
+def _describe_limits(has_vision: bool, has_mic: bool) -> str:
+    """The other half of self-knowledge: what is out of reach, and why.
+
+    Derived from how the program is actually built, not from a list of refusals.
+    A model that knows its boundaries stops improvising around them, and stating
+    them as architecture rather than as rules keeps the answer honest in any
+    language.
+    """
+    out = [
+        "- Anything not listed above is outside your reach. Say so in one clause "
+        "and offer the nearest thing you can actually do — never mime an action "
+        "you cannot take, and never report a result you did not get.",
+        "- You act on this machine only. You cannot reach the user's other "
+        "devices, accounts or hardware except through the tools listed above.",
+        "- You remember what is in the memory block and what has been said this "
+        "session. Anything else you were told before is gone unless it was saved.",
+    ]
+    if has_vision:
+        out.append(
+            "- Your sight is not continuous. You see nothing until you call a "
