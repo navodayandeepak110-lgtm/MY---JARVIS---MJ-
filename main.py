@@ -319,3 +319,19 @@ def _render_prompt(template: str, values: dict) -> str:
     for key, val in values.items():
         out = out.replace("{" + key + "}", str(val))
     return out
+
+
+def _get_api_key() -> str:
+    with open(API_CONFIG_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)["gemini_api_key"]
+
+
+def _load_system_prompt() -> str:
+    try:
+        return PROMPT_PATH.read_text(encoding="utf-8")
+    except Exception:
+        return (
+            "You are JARVIS, Tony Stark's AI assistant. "
+            "Be concise, direct, and always use the provided tools to complete tasks. "
+            "Never simulate or guess results — always call the appropriate tool."
+        )
