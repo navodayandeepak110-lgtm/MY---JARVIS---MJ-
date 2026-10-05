@@ -196,3 +196,18 @@ _CURSOR_SLACK = 0.15
 
 def _pcm_visemes(samples, sr: int = 24000):
     """Slice a PCM block into (level, openness, width) frames, one per 20 ms.
+
+    Returns [] on anything unexpected — the mouth falls back to loudness-only
+    articulation rather than the caller having to handle an error.
+    """
+    try:
+        x = np.asarray(samples, dtype=np.float32)
+        if x.size < _VIS_WIN:
+            return []
+        win = np.hanning(_VIS_WIN).astype(np.float32)
+        freqs = np.fft.rfftfreq(_VIS_WIN, 1.0 / sr)
+        b_f1_lo = (freqs >= 150) & (freqs < 450)     # F1 of close vowels
+        b_f1_hi = (freqs >= 450) & (freqs < 1100)    # F1 of open vowels
+        b_f2_bk = (freqs >= 600) & (freqs < 1300)    # F2 of rounded vowels
+        b_f2_fr = (freqs >= 1700) & (freqs < 3200)   # F2 of spread vowels
+        b_hiss = (freqs >= 3800) & (freqs < 8000)    # fricatives
