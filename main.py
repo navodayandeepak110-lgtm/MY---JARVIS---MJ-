@@ -211,3 +211,22 @@ def _pcm_visemes(samples, sr: int = 24000):
         b_f2_bk = (freqs >= 600) & (freqs < 1300)    # F2 of rounded vowels
         b_f2_fr = (freqs >= 1700) & (freqs < 3200)   # F2 of spread vowels
         b_hiss = (freqs >= 3800) & (freqs < 8000)    # fricatives
+
+        # One frame per hop across the *whole* block. Stepping only while a full
+        # window fits stopped 1024 - 480 samples short of the end, so a 200 ms
+        # batch yielded 160 ms of schedule: the mouth ran out of frames before
+        # the audio ran out of sound, and each batch no longer lined up with the
+        # end of the one before it. Losing 20 % of every batch is most of why
+        # the mouth did not track the words.
+        out = []
+        for start in range(0, x.size, _VIS_HOP):
+            # The level gates closures, so it is measured over exactly this
+            # 20 ms and never looks ahead. The spectrum needs a longer window
+            # to resolve formants and may be short-filled at the very end.
+            level = _pcm_level(x[start:start + _VIS_HOP])
+            seg = x[start:start + _VIS_WIN]
+            if seg.size < _VIS_WIN:
+                seg = np.concatenate([seg, np.zeros(_VIS_WIN - seg.size,
+                                                    dtype=np.float32)])
+            if level <= 0.0:
+                out.append((0.0, 0.0, 0.0))
