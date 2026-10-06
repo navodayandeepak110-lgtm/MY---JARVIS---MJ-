@@ -474,3 +474,27 @@ TOOL_DECLARATIONS = [
             "required": ["category", "key", "value"]
         }
     },
+    {
+        "name": "recall_memory",
+        "description": (
+            "Look up a fact you have stored about the user but which is NOT in "
+            "the memory block of your system prompt. "
+            "The prompt lists the keys it did not have room for under "
+            "'[ALSO REMEMBERED]' — if the user asks about anything named there, "
+            "call this FIRST. "
+            "Also call it before saying you do not know something personal, and "
+            "when the user asks what you remember about them (leave query empty "
+            "for everything). "
+            "This is a local file search: it is instant and costs nothing."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "query": {
+                    "type": "STRING",
+                    "description": (
+                        "Keyword to search for — a name, a topic, a category "
+                        "(e.g. 'ayse', 'coffee', 'projects'). "
+                        "Leave empty to list everything stored."
+                    ),
+                },
