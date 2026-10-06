@@ -431,3 +431,16 @@ TOOL_DECLARATIONS = [
             "required": ["action"],
         },
     },
+    {
+        "name": "shutdown_jarvis",
+        "description": (
+            "Shuts down the assistant completely. "
+            "Call this when the user expresses intent to end the conversation, "
+            "close the assistant, say goodbye, or stop Jarvis. "
+            "The user can say this in ANY language."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {},
+        }
+    },
