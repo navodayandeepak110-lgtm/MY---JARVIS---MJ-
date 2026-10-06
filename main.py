@@ -397,3 +397,12 @@ TOOL_DECLARATIONS = [
             "required": ["text"]
         }
     },
+    {
+        "name": "close_camera",
+        "description": (
+            "Closes the live camera view shown on screen. "
+            "Call when the user says (in ANY language): close camera, stop camera, "
+            "turn off camera, that's creepy, etc."
+        ),
+        "parameters": {"type": "OBJECT", "properties": {}, "required": []}
+    },
