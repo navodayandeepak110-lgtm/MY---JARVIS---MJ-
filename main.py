@@ -406,3 +406,28 @@ TOOL_DECLARATIONS = [
         ),
         "parameters": {"type": "OBJECT", "properties": {}, "required": []}
     },
+    {
+        "name": "manage_monitor",
+        "description": (
+            "Add, remove, or list background monitoring topics. "
+            "JARVIS checks these topics once a day and alerts the user when there is a new development. "
+            "Use 'add' when the user says 'monitor X', 'track X', 'follow X'. "
+            "Use 'remove' when the user says 'stop monitoring X'. "
+            "Use 'list' when the user asks what is being monitored. "
+            "Do NOT add crypto, financial, or trading topics."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "action": {
+                    "type":        "STRING",
+                    "description": "add | remove | list",
+                },
+                "topic": {
+                    "type":        "STRING",
+                    "description": "Topic to monitor or stop monitoring (e.g. 'space exploration', 'AI news')",
+                },
+            },
+            "required": ["action"],
+        },
+    },
