@@ -358,3 +358,42 @@ def _clean_transcript(text: str) -> str:
     text = _CTRL_RE.sub("", text)
     text = re.sub(r"[\x00-\x08\x0b-\x1f]", "", text)
     return text.strip()
+
+TOOL_DECLARATIONS = [
+    # ── Inline tools ─────────────────────────────────────────────────────────
+    # These stay here (rather than in an actions/*.py TOOL dict) because their
+    # handling is woven into live-session state — vision capture/injection,
+    # camera stream, memory writes, the monitor engine, and shutdown. All other
+    # tools live in their own action file and are auto-discovered by
+    # core.action_loader (see JarvisLive.__init__).
+    {
+        "name": "system_status",
+        "description": (
+            "Returns real-time system metrics: CPU usage, RAM, GPU load, CPU temperature, "
+            "uptime, and process count. Use when the user asks about computer performance, "
+            "temperature, memory, or resource usage."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {},
+        }
+    },
+    {
+        "name": "screen_process",
+        "description": (
+            "Captures the screen or webcam image and lets you analyze it. "
+            "MUST be called when user asks what is on screen, what you see, "
+            "look at camera, analyze my screen, etc. "
+            "You have NO visual ability without this tool. "
+            "After the image is captured it is sent directly to you — describe what you see and answer the user's question. "
+            "When using camera: the live view stays open until user says close it or calls close_camera."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "angle": {"type": "STRING", "description": "'screen' to capture display, 'camera' for webcam. Default: 'screen'"},
+                "text":  {"type": "STRING", "description": "The question or instruction about the captured image"}
+            },
+            "required": ["text"]
+        }
+    },
