@@ -498,3 +498,31 @@ TOOL_DECLARATIONS = [
                         "Leave empty to list everything stored."
                     ),
                 },
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "undo",
+        "description": (
+            "Reverse the last change YOU made to this computer — a file you "
+            "moved, renamed, created or wrote, or a setting you changed such as "
+            "volume, brightness, dark mode or WiFi. "
+            "Call this whenever the user says undo, revert, take it back, put it "
+            "back, cancel that, or tells you that you did the wrong thing, in ANY "
+            "language. "
+            "Use action='list' when they ask what can be undone. "
+            "This only covers your own actions — it is not the Ctrl+Z of whatever "
+            "application is on screen (that is computer_settings with action 'undo')."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "action": {
+                    "type": "STRING",
+                    "description": "undo (default) — reverse the last change | list — show what can be undone",
+                },
+            },
+            "required": [],
+        },
+    },
