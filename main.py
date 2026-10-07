@@ -667,3 +667,34 @@ class JarvisLive:
         self.ui.get_plugins = self._plugin_registry.list_for_ui
         self.ui.get_plugin_settings = self._plugin_registry.settings_schemas  # ⚙ settings tab
         self.ui.request_say = self.plugin_say   # plugins: mid-task speech channel
+
+        # ── Wake word ────────────────────────────────────────────────────────
+        # _awake gates the mic (see _listen_audio) and the background speakers.
+        # It is True whenever wake word is OFF, so default behaviour is unchanged.
+        self._wake_enabled     = get_wake_word_enabled()
+        self._awake            = not self._wake_enabled
+        self._wake_detector: WakeWordDetector | None = None
+        self._wake_sleep_timeout = WAKE_SLEEP_TIMEOUT
+
+        # Restore the saved push-to-talk preference. Doing it here rather than
+        # in __init__ means the hotkey thread only exists once there is a
+        # session to talk to.
+        if get_push_to_talk_enabled():
+            try:
+                self.set_push_to_talk(True)
+            except Exception as e:
+                print(f"[JARVIS] ⚠ Push-to-talk unavailable: {e}")
+        # UI control surface for the Wake Word settings section.
+        self.ui.wake_is_ready    = wake_is_ready          # () -> bool
+        self.ui.wake_get_state   = self._wake_state       # () -> dict
+        self.ui.on_wake_toggle   = self._ui_wake_toggle   # (enable: bool) -> str
+        self.ui.on_wake_manual   = self._ui_wake_manual   # () -> toggle awake/asleep
+        self.ui.on_wake_install  = self._ui_wake_install  # () -> (ok, msg)
+
+    # ── Wake word: state machine ─────────────────────────────────────────────
+
+    def _wake_state(self) -> dict:
+        # A loaded, running detector is definitively ready; otherwise fall back
+        # to the cheap on-disk model-file check (no Model construction).
+        ready = bool(self._wake_detector and self._wake_detector.ready) or wake_is_ready()
+        return {"enabled": self._wake_enabled, "awake": self._awake, "ready": ready}
