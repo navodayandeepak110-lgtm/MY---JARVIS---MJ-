@@ -614,3 +614,26 @@ class JarvisLive:
         self.ui.on_audio_device_change = self._on_audio_device_change
         self._reconnect_event: asyncio.Event | None = None
         self._reconnect_keep = True   # False → next rebuild drops the resumption handle
+
+        # ── Session resumption ─────────────────────────────────────────
+        # The server issues a resumption handle every few seconds and reissues
+        # it as the conversation moves on. Before this, session_resumption was
+        # switched ON in the config and the update was never read, so the handle
+        # was thrown away and EVERY reconnect — a dropped packet, a voice change,
+        # switching microphone — started an empty session. "Unlimited sessions"
+        # leaked through exactly this hole.
+        #
+        # Deliberately in RAM only, never written to disk. Persisting it would
+        # make a fresh launch continue yesterday's conversation, which sounds
+        # appealing but breaks the session-summary flow: _save_session_summary
+        # runs at shutdown and the morning briefing pops it the next day. A
+        # conversation that never ends never produces a summary, and the
+        # "yesterday we talked about…" line silently disappears.
+        self._resume_handle: str | None = None
+        self._turn_done_event: asyncio.Event | None = None
+        self._dashboard     = None
+        self._briefing_sent    = False          # morning briefing fires once per process
+        self._sys_monitor      = SystemMonitor()  # persistent cooldown state
+        self._proactive        = ProactiveEngine()
+        self._last_user_speech = time.monotonic()  # updated on every user utterance
+        self._session_log: list[str] = []          # conversation turns for end-of-session summary
