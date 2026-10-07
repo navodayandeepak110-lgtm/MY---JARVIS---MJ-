@@ -541,3 +541,26 @@ class _ReconnectSignal(Exception):
     def __init__(self, keep_context: bool = True):
         super().__init__()
         self.keep_context = keep_context
+
+
+def _is_reconnect_signal(exc: BaseException) -> bool:
+    """True if `exc` is a _ReconnectSignal, or a(n) (Base)ExceptionGroup that
+    wraps one — TaskGroup bundles child exceptions into a group."""
+    if isinstance(exc, _ReconnectSignal):
+        return True
+    if _EXCEPTION_GROUP and isinstance(exc, _EXCEPTION_GROUP):
+        return any(_is_reconnect_signal(sub) for sub in exc.exceptions)
+    return False
+
+
+def _keep_context_of(exc: BaseException) -> bool:
+    """Read `keep_context` off a reconnect signal, unwrapping the group the
+    TaskGroup put it in. Defaults to True: an unexpected shape must not silently
+    wipe the conversation."""
+    if isinstance(exc, _ReconnectSignal):
+        return getattr(exc, "keep_context", True)
+    if _EXCEPTION_GROUP and isinstance(exc, _EXCEPTION_GROUP):
+        for sub in exc.exceptions:
+            if _is_reconnect_signal(sub):
+                return _keep_context_of(sub)
+    return True
