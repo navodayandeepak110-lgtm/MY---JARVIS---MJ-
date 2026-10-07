@@ -564,3 +564,53 @@ def _keep_context_of(exc: BaseException) -> bool:
             if _is_reconnect_signal(sub):
                 return _keep_context_of(sub)
     return True
+
+
+class JarvisLive:
+    def __init__(self, ui: JarvisUI):
+        self.ui             = ui
+        self._asst_name     = "JARVI    S"   # updated each session from config
+        self.session              = None
+        self.audio_in_queue       = None
+        self.out_queue            = None
+        self._loop                     = None
+        self._is_speaking         = False
+        self._speaking_lock       = threading.Lock()
+        self._phone_active        = False   # True while phone mic is streaming; pauses PC mic
+        self._pending_vision       = None    # (img_bytes, mime_type, question, angle) to inject after tool response
+        self._vision_cam_active    = False   # True if camera was opened for vision → auto-close after response
+        self._vision_close_pending = False   # True after vision injected; next turn_complete closes camera
+        self._vision_last_time     = 0.0     # monotonic time of last screen_process call (cooldown guard)
+        self._vision_busy          = False   # True while a vision capture/inject cycle is in flight
+        self._interrupted          = False   # True while draining audio after user interrupt
+        # Transcript-driven mouth shapes for the avatar. Fed from the receive
+        # loop as words arrive, drained by the playback loop against the audio.
+        self._visemes              = VisemeStream()
+        self._last_out_logged      = ""      # de-dupes a re-sent transcript tail
+        # Push-to-talk
+        self._ptt_enabled          = False
+        self._ptt_held             = False
+        self._ptt                  = None    # core.hotkey.PushToTalk
+        self._out_level            = 0.0     # level of the audio being played right now
+        self._echo                 = EchoGuard()
+        # `stream.write()` returns when the buffer accepts the audio, not when the
+        # speaker has finished with it, so sound is still in the room after the
+        # speaking flag drops. Streaming the microphone during that gap is how an
+        # assistant ends up answering itself. Measured from the device rather than
+        # guessed; see _play_audio.
+        self._out_latency          = 0.20    # seconds, replaced with the real value
+        self._tail_until           = 0.0     # monotonic time the echo tail expires
+        # Wall-clock time at which the audio written next will begin to sound.
+        # The mouth is scheduled against this, never against "now": batches are
+        # handed to the device far faster than they play, so "now" ran the lips
+        # ahead of the words and cut every schedule short. 0 = nothing playing.
+        self._play_cursor          = 0.0
+        self.ui.on_push_to_talk   = self.set_push_to_talk
+        self.ui.ptt_hold          = self._on_ptt
+        self.ui.on_text_command   = self._on_text_command
+        self.ui.on_remote_clicked = self._make_remote_key
+        self.ui.on_interrupt      = self.interrupt
+        self.ui.on_voice_change   = self._on_voice_change     # voice picker → rebuild session
+        self.ui.on_audio_device_change = self._on_audio_device_change
+        self._reconnect_event: asyncio.Event | None = None
+        self._reconnect_keep = True   # False → next rebuild drops the resumption handle
