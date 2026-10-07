@@ -637,3 +637,33 @@ class JarvisLive:
         self._proactive        = ProactiveEngine()
         self._last_user_speech = time.monotonic()  # updated on every user utterance
         self._session_log: list[str] = []          # conversation turns for end-of-session summary
+
+        self._enhanced_live = True  # proactive audio; auto-disabled if the server rejects it
+        self._tuned_live    = True  # turn-taking / media / thinking knobs; same fallback
+
+        _base_dir = Path(__file__).resolve().parent
+        _inline_names = {t["name"] for t in TOOL_DECLARATIONS}
+
+        # File-backed tools: every actions/*.py with a TOOL dict, discovered the
+        # same way plugins are. Reserved names = the inline tools above, so an
+        # action can never shadow one.
+        self._action_registry = discover_actions(
+            actions_dir=_base_dir / "actions",
+            reserved_names=_inline_names,
+            logger=lambda msg: print(f"[Actions] {msg}"),
+        )
+
+        # Plugins must not collide with either an inline tool or a discovered action.
+        _core_names = _inline_names | self._action_registry.names()
+        self._plugin_registry = discover_plugins(
+            plugins_dir=_base_dir / "plugins",
+            core_tool_names=_core_names,
+            # Console gets the full boot transcript; the activity log gets only
+            # what the user has to know about. Every plugin loading correctly is
+            # the expected case and does not belong in their conversation.
+            logger=lambda msg: print(f"[Plugins] {msg}"),
+            notify=lambda msg: self.ui.write_log(f"SYS: {msg}"),
+        )
+        self.ui.get_plugins = self._plugin_registry.list_for_ui
+        self.ui.get_plugin_settings = self._plugin_registry.settings_schemas  # ⚙ settings tab
+        self.ui.request_say = self.plugin_say   # plugins: mid-task speech channel
