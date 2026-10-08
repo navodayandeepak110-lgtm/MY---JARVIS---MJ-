@@ -731,3 +731,16 @@ class JarvisLive:
         self.set_speaking(False)
         self.ui.set_state("SLEEPING")
         self.ui.write_log(f"SYS: Sleeping — {reason}. Say 'Hey Jarvis' to wake me.")
+
+    async def _run_sleep_watch(self) -> None:
+        """Auto-sleep after the configured silence window (wake-word mode only)."""
+        while True:
+            await asyncio.sleep(5)
+            if not self._wake_enabled or not self._awake:
+                continue
+            with self._speaking_lock:
+                speaking = self._is_speaking
+            if speaking:
+                continue
+            if (time.monotonic() - self._last_user_speech) > self._wake_sleep_timeout:
+                self.sleep(reason="no speech for 2 minutes")
