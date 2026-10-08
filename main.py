@@ -821,3 +821,21 @@ class JarvisLive:
         self._reconnect_reason = reason
         if loop and ev is not None:
             loop.call_soon_threadsafe(ev.set)
+
+    def _on_voice_change(self):
+        """Voice picker applied.
+
+        The voice is baked into the session at connect time, so a rebuild is
+        required. It is rebuilt WITHOUT the resumption handle on purpose:
+        resuming restores the server's own session state, and the safe reading
+        is that it restores the voice with it — which would make the picker
+        appear to do nothing. Losing context here is acceptable because changing
+        voice is a deliberate, rare act; losing it on a dropped packet was not."""
+        self.request_reconnect(keep_context=False, reason="new voice")
+
+    def _on_audio_device_change(self):
+        """Microphone or speaker changed. Both streams are opened inside the
+        session TaskGroup, so they can only be re-opened by rebuilding it —
+        but the conversation is kept, which is the whole reason resumption
+        landed before this feature did."""
+        self.request_reconnect(keep_context=True, reason="audio device")
