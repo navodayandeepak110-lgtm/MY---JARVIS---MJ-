@@ -853,3 +853,16 @@ class JarvisLive:
             + ("..." if keep else " (starting a fresh conversation)...")
         )
         raise _ReconnectSignal(keep_context=keep)
+
+    def _make_remote_key(self):
+        """Called from Qt main thread when user presses Remote Control."""
+        if self._dashboard is None:
+            self.ui.write_log(
+                "SYS: Dashboard unavailable. "
+                "Run: pip install fastapi \"uvicorn[standard]\" cryptography"
+            )
+            return None
+        key    = self._dashboard.new_key()
+        url    = self._dashboard.get_url()
+        manual = self._dashboard.get_manual_url()
+        return url, key, f"{url}/auto-login?key={key}", manual
