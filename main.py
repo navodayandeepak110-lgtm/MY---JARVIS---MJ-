@@ -714,3 +714,20 @@ class JarvisLive:
     def _on_wake_detected(self) -> None:
         """Called from the detector thread when 'Hey Jarvis' is heard."""
         self.wake(reason="wake word")
+
+    def wake(self, reason: str = "wake word") -> None:
+        if self._awake:
+            return
+        self._awake = True
+        self._last_user_speech = time.monotonic()   # start the auto-sleep clock now
+        if not self.ui.muted:
+            self.ui.set_state("LISTENING")
+        self.ui.write_log(f"SYS: Awake — {reason}.")
+
+    def sleep(self, reason: str = "timeout") -> None:
+        if not self._awake:
+            return
+        self._awake = False
+        self.set_speaking(False)
+        self.ui.set_state("SLEEPING")
+        self.ui.write_log(f"SYS: Sleeping — {reason}. Say 'Hey Jarvis' to wake me.")
