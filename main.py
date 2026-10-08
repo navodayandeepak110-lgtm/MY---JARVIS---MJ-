@@ -698,3 +698,19 @@ class JarvisLive:
         # to the cheap on-disk model-file check (no Model construction).
         ready = bool(self._wake_detector and self._wake_detector.ready) or wake_is_ready()
         return {"enabled": self._wake_enabled, "awake": self._awake, "ready": ready}
+
+    def _ensure_wake_detector(self) -> bool:
+        """Load the detector once (model loads on first start). Idempotent."""
+        if self._wake_detector is None:
+            self._wake_detector = WakeWordDetector(
+                on_detect=self._on_wake_detected,
+                logger=lambda m: print(f"[Wake] {m}"),
+                notify=lambda m: self.ui.write_log(f"SYS: {m}"),
+            )
+        if not self._wake_detector.ready:
+            return self._wake_detector.start()
+        return True
+
+    def _on_wake_detected(self) -> None:
+        """Called from the detector thread when 'Hey Jarvis' is heard."""
+        self.wake(reason="wake word")
