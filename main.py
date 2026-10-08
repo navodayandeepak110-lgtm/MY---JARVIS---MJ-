@@ -866,3 +866,24 @@ class JarvisLive:
         url    = self._dashboard.get_url()
         manual = self._dashboard.get_manual_url()
         return url, key, f"{url}/auto-login?key={key}", manual
+
+    def _on_text_command(self, text: str):
+        if not self._loop or not self.session:
+            return
+        # Respect wake-word sleep: a typed command must not be answered while
+        # asleep either (the sleep gate is not just for the mic). Wake first with
+        # "Hey Jarvis" or the WAKE NOW button.
+        if self._wake_enabled and not self._awake:
+            self.ui.write_log("SYS: I'm asleep — say 'Hey Jarvis' or tap WAKE NOW first.")
+            return
+        asyncio.run_coroutine_threadsafe(
+            self.session.send_client_content(
+                turns={"role": "user", "parts": [{"text": text}]},
+                turn_complete=True
+            ),
+            self._loop
+        )
+
+    def _tail_active(self) -> bool:
+        """True while the speakers may still be finishing our last sentence."""
+        return time.monotonic() < self._tail_until
