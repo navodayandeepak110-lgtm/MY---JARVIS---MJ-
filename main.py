@@ -839,3 +839,17 @@ class JarvisLive:
         but the conversation is kept, which is the whole reason resumption
         landed before this feature did."""
         self.request_reconnect(keep_context=True, reason="audio device")
+
+    async def _watch_reconnect(self):
+        """Session-scoped task: when a voluntary reconnect is requested, raise a
+        signal that unwinds the TaskGroup so the run loop rebuilds the session."""
+        assert self._reconnect_event is not None
+        await self._reconnect_event.wait()
+        self._reconnect_event.clear()
+        keep   = self._reconnect_keep
+        reason = getattr(self, "_reconnect_reason", "") or "settings"
+        self.ui.write_log(
+            f"SYS: Applying {reason} — reconnecting"
+            + ("..." if keep else " (starting a fresh conversation)...")
+        )
+        raise _ReconnectSignal(keep_context=keep)
