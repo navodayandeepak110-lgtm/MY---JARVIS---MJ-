@@ -801,3 +801,23 @@ class JarvisLive:
                 )
             except Exception as e:
                 print(f"[PluginSay] {e}")
+
+        try:
+            asyncio.run_coroutine_threadsafe(_say(), loop)
+        except Exception as e:
+            print(f"[PluginSay] {e}")
+
+    def request_reconnect(self, keep_context: bool = True, reason: str = ""):
+        """Thread-safe: ask the run loop to tear down and rebuild the Live
+        session. Called from the Qt thread. No-op until the async loop and
+        reconnect event exist.
+
+        `keep_context=False` drops the resumption handle so the new session
+        starts empty — only for changes the server cannot apply to a resumed
+        session."""
+        loop = getattr(self, "_loop", None)
+        ev   = self._reconnect_event
+        self._reconnect_keep   = keep_context
+        self._reconnect_reason = reason
+        if loop and ev is not None:
+            loop.call_soon_threadsafe(ev.set)
