@@ -779,3 +779,25 @@ class JarvisLive:
         # what they are waiting to see.
         return wake_install(logger=lambda m: print(f"[Wake] {m}"),
                             notify=lambda m: self.ui.write_log(f"SYS: {m}"))
+
+    def plugin_say(self, instruction: str) -> None:
+        """
+        Thread-safe speech channel for plugins: lets a plugin ask JARVIS to
+        say something short WHILE its run() is still executing (plugins block
+        their executor thread, so they can't speak through the tool response
+        until they finish). The instruction is injected into the Live session
+        exactly like a proactive check-in; Gemini phrases it naturally in the
+        user's language. Silently a no-op when no session is connected.
+        """
+        loop = getattr(self, "_loop", None)
+        if not loop or not self.session:
+            return
+
+        async def _say():
+            try:
+                await self.session.send_client_content(
+                    turns={"role": "user", "parts": [{"text": instruction}]},
+                    turn_complete=True,
+                )
+            except Exception as e:
+                print(f"[PluginSay] {e}")
