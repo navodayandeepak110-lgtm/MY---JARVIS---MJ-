@@ -744,3 +744,38 @@ class JarvisLive:
                 continue
             if (time.monotonic() - self._last_user_speech) > self._wake_sleep_timeout:
                 self.sleep(reason="no speech for 2 minutes")
+
+    # ── Wake word: UI callbacks (called from the Qt thread) ──────────────────
+
+    def _ui_wake_toggle(self, enable: bool) -> str:
+        """Enable/disable wake word from the settings UI. Returns a status token:
+        'enabled' | 'disabled' | 'need_download'."""
+        if enable:
+            if not wake_is_ready():
+                return "need_download"
+            self._wake_enabled = True
+            save_wake_word_enabled(True)
+            self._ensure_wake_detector()
+            self.sleep(reason="wake word enabled")
+            return "enabled"
+        else:
+            self._wake_enabled = False
+            save_wake_word_enabled(False)
+            self.wake(reason="wake word disabled")
+            return "disabled"
+
+    def _ui_wake_manual(self) -> None:
+        """Manual sleep/wake button in the UI."""
+        if not self._wake_enabled:
+            return
+        if self._awake:
+            self.sleep(reason="you tapped sleep")
+        else:
+            self.wake(reason="you tapped wake")
+
+    def _ui_wake_install(self) -> tuple[bool, str]:
+        """Download openwakeword + the model (runs in a UI worker thread)."""
+        # Triggered by the user pressing the button, so its progress is exactly
+        # what they are waiting to see.
+        return wake_install(logger=lambda m: print(f"[Wake] {m}"),
+                            notify=lambda m: self.ui.write_log(f"SYS: {m}"))
