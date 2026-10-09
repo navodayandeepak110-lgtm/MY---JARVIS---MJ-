@@ -908,3 +908,30 @@ class JarvisLive:
             self.ui.set_state("SPEAKING")
         elif not self.ui.muted:
             self.ui.set_state("LISTENING")
+
+    def set_push_to_talk(self, enabled: bool) -> str:
+        """Turn hold-to-talk on or off. Returns the scope actually achieved."""
+        from core.hotkey import PushToTalk
+
+        self._ptt_enabled = bool(enabled)
+        self._ptt_held = False
+        if not enabled:
+            if self._ptt is not None:
+                self._ptt.stop()
+                self._ptt = None
+            return "off"
+
+        if self._ptt is None:
+            self._ptt = PushToTalk(self._on_ptt)
+        scope = self._ptt.start()
+        # A window-scoped chord is a real limitation, not a detail — say it once
+        # in the log so nobody wonders why it does nothing while another app is
+        # focused. Reporting it must never be able to undo the thing it reports.
+        try:
+            self.ui.write_log(
+                f"SYS: Push-to-talk on — hold {self._ptt.label}"
+                + ("." if scope == "global"
+                   else " (works while this window is focused)."))
+        except Exception:
+            pass
+        return scope
