@@ -949,3 +949,25 @@ class JarvisLive:
             self.ui.set_state("LISTENING" if held else "SLEEPING")
         except Exception:
             pass
+
+    def interrupt(self) -> None:
+        """Stop JARVIS mid-speech: drain queued audio and open mic immediately."""
+        self._interrupted = True
+        q = self.audio_in_queue
+        if q:
+            drained = 0
+            while True:
+                try:
+                    q.get_nowait()
+                    drained += 1
+                except Exception:
+                    break
+            if drained:
+                print(f"[JARVIS] ✋ Interrupted — {drained} audio chunks discarded")
+        self.set_speaking(False)
+        # The words we were about to mouth are never going to be spoken now.
+        self._visemes.reset()
+        self._play_cursor = 0.0     # next batch starts a fresh timeline
+        if self._turn_done_event:
+            self._turn_done_event.clear()
+        self.ui.write_log("SYS: Interrupted — listening...")
