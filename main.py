@@ -935,3 +935,17 @@ class JarvisLive:
         except Exception:
             pass
         return scope
+
+    def _on_ptt(self, held: bool) -> None:
+        """Chord pressed or released — may arrive on the hotkey thread."""
+        self._ptt_held = held
+        if held:
+            # Holding the key is also a way to wake it, so push-to-talk works
+            # without having to say the wake word first.
+            if self._wake_enabled and not self._awake:
+                self._awake = True
+                self._last_user_speech = time.monotonic()
+        try:
+            self.ui.set_state("LISTENING" if held else "SLEEPING")
+        except Exception:
+            pass
