@@ -971,3 +971,31 @@ class JarvisLive:
         if self._turn_done_event:
             self._turn_done_event.clear()
         self.ui.write_log("SYS: Interrupted — listening...")
+
+    def speak(self, text: str):
+        if not self._loop or not self.session:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self.session.send_client_content(
+                turns={"role": "user", "parts": [{"text": text}]},
+                turn_complete=True
+            ),
+            self._loop
+        )
+
+    def speak_error(self, tool_name: str, error: str):
+        short = str(error)[:120]
+        self.ui.write_log(f"ERR: {tool_name} — {short}")
+        self.speak(f"Sir, {tool_name} encountered an error. {short}")
+
+    def _build_config(self) -> types.LiveConnectConfig:
+        from datetime import datetime
+
+        # Load customization from config
+        try:
+            _cfg = json.loads(open(API_CONFIG_PATH, encoding="utf-8").read())
+            self._asst_name = (_cfg.get("assistant_name") or "JARVIS").strip()
+            _user_name = (_cfg.get("user_name") or "").strip()
+        except Exception:
+            self._asst_name = "JARVIS"
+            _user_name = ""
