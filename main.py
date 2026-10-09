@@ -887,3 +887,24 @@ class JarvisLive:
     def _tail_active(self) -> bool:
         """True while the speakers may still be finishing our last sentence."""
         return time.monotonic() < self._tail_until
+
+    def set_speaking(self, value: bool):
+        with self._speaking_lock:
+            self._is_speaking = value
+        if value:
+            self._tail_until = 0.0
+        else:
+            # Hold the guard open across the device's own output latency plus a
+            # margin for the room. The microphone is NOT muted during it — the
+            # guard still lets a genuine reply through, so answering instantly
+            # still works. Only our own echo is dropped.
+            self._tail_until = time.monotonic() + self._out_latency + _TAIL_MARGIN
+        if not value:
+            # The echo history is deliberately NOT cleared here: the tail above
+            # still needs it to recognise our own voice. It is dropped when the
+            # tail expires. What the guard learned about the room always stays.
+            self._out_level = 0.0
+        if value:
+            self.ui.set_state("SPEAKING")
+        elif not self.ui.muted:
+            self.ui.set_state("LISTENING")
