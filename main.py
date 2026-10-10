@@ -1055,3 +1055,27 @@ class JarvisLive:
         if mem_str:
             parts.append(mem_str)
         parts.append(sys_prompt)
+
+        cfg = dict(
+            response_modalities=["AUDIO"],
+            output_audio_transcription={},
+            input_audio_transcription={},
+            system_instruction="\n".join(parts),
+            tools=[{"function_declarations": _all_decls}],
+            # Hand back the handle captured from the last session_resumption
+            # update. `handle=None` is exactly the old behaviour (ask for
+            # handles, start fresh), so the first connect of a run is unchanged.
+            session_resumption=types.SessionResumptionConfig(
+                handle=self._resume_handle
+            ),
+            # Sliding-window compression: session never dies from a full context
+            # window — JARVIS can stay in one conversation for hours
+            context_window_compression=types.ContextWindowCompressionConfig(
+                sliding_window=types.SlidingWindow(),
+            ),
+            speech_config=types.SpeechConfig(
+                voice_config=types.VoiceConfig(
+                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                        voice_name=get_voice()
+                    )
+                )
