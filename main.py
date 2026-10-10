@@ -1030,3 +1030,28 @@ class JarvisLive:
             f"Always refer to yourself as {self._asst_name}.\n"
             f"{_addr}\n\n"
         )
+
+        # Everything the model is told about *itself* is derived here, not
+        # written into prompt.txt: the name comes from config, the platform from
+        # the host, the capability list from the registries that were just
+        # discovered. Rename the assistant, add a plugin or move to another OS
+        # and this follows without anyone editing a prompt.
+        _all_decls = (TOOL_DECLARATIONS
+                      + self._action_registry.get_tool_declarations()
+                      + self._plugin_registry.get_tool_declarations())
+        _names = {(d.get("name") if isinstance(d, dict) else getattr(d, "name", ""))
+                  for d in _all_decls}
+        sys_prompt = _render_prompt(sys_prompt, {
+            "assistant_name": self._asst_name,
+            "platform": f"{_platform.system()} {_platform.release()}".strip(),
+            "capabilities": _describe_tools(_all_decls),
+            "limits": _describe_limits(
+                has_vision="screen_process" in _names,
+                has_mic=True,
+            ),
+        })
+
+        parts = [time_ctx, identity_ctx]
+        if mem_str:
+            parts.append(mem_str)
+        parts.append(sys_prompt)
