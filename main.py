@@ -1079,3 +1079,19 @@ class JarvisLive:
                         voice_name=get_voice()
                     )
                 )
+            ),
+        )
+        if self._enhanced_live:
+            # Proactive audio: JARVIS stays silent when speech isn't addressed
+            # to it (background chatter, talking to someone else in the room).
+            # (Affective dialog was dropped: gemini-3.1-flash-live does not
+            #  support it, and it never reliably detected tone in practice.
+            #  To restore it on a 2.5 native-audio model, add back:
+            #  cfg["enable_affective_dialog"] = True )
+            if get_proactive_audio_enabled():
+                cfg["proactivity"] = types.ProactivityConfig(proactive_audio=True)
+
+        if self._tuned_live:
+            cfg.update(self._tuning_config())
+
+        return types.LiveConnectConfig(**cfg)
