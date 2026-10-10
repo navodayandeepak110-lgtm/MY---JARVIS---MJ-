@@ -999,3 +999,34 @@ class JarvisLive:
         except Exception:
             self._asst_name = "JARVIS"
             _user_name = ""
+
+        memory     = load_memory()
+        mem_str    = format_memory_for_prompt(memory)
+        sys_prompt = _load_system_prompt()
+
+        now      = datetime.now()
+        time_str = now.strftime("%A, %B %d, %Y — %I:%M %p")
+        time_ctx = (
+            f"[CURRENT DATE & TIME]\n"
+            f"Right now it is: {time_str}\n"
+            f"Use this to calculate exact times for reminders.\n\n"
+        )
+
+        # Identity injection — overrides any hardcoded name in prompt.txt
+        # Address form is a property of the language being spoken, so it is
+        # stated as a principle rather than a two-language lookup — the model
+        # already knows the respectful register of whatever language it is in.
+        _addr = (f"ADDRESS: Always call the user '{_user_name}'."
+                 if _user_name
+                 else 'ADDRESS: Address the user with the ordinary respectful form '
+                      'for a superior in the language you are currently speaking — '
+                      '"sir" in English, its everyday equivalent in any other '
+                      'language. Never an archaic or aristocratic form, and never '
+                      'the form from a different language than the one you are '
+                      'speaking in this sentence.')
+        identity_ctx = (
+            f"[IDENTITY]\n"
+            f"Your name is {self._asst_name}. "
+            f"Always refer to yourself as {self._asst_name}.\n"
+            f"{_addr}\n\n"
+        )
