@@ -1126,3 +1126,25 @@ class JarvisLive:
                 detect.start_of_speech_sensitivity = types.StartSensitivity.START_SENSITIVITY_LOW
             out["realtime_input_config"] = types.RealtimeInputConfig(
                 automatic_activity_detection=detect)
+
+        # Screenshots and camera frames are tokenised at this resolution and then
+        # stay in the session's context. 'medium' keeps on-screen text legible
+        # for a fraction of a full-resolution frame.
+        res = get_media_resolution()
+        if res != "default":
+            out["media_resolution"] = {
+                "low":    types.MediaResolution.MEDIA_RESOLUTION_LOW,
+                "medium": types.MediaResolution.MEDIA_RESOLUTION_MEDIUM,
+                "high":   types.MediaResolution.MEDIA_RESOLUTION_HIGH,
+            }[res]
+
+        # Thinking is left at the server default deliberately. Forcing the budget
+        # to zero was measured on gemini-3.1-flash-live over interleaved trials
+        # and did not make the first word arrive sooner — this model does not
+        # appear to deliberate on the Live path, so pinning the field only adds a
+        # way for a future release to behave differently. Set "thinking_enabled"
+        # in config/api_keys.json to true to let it reason instead.
+        if get_thinking_enabled():
+            out["thinking_config"] = types.ThinkingConfig(thinking_budget=-1)
+
+        return out
