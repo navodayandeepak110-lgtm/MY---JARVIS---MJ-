@@ -1095,3 +1095,34 @@ class JarvisLive:
             cfg.update(self._tuning_config())
 
         return types.LiveConnectConfig(**cfg)
+
+    def _tuning_config(self) -> dict:
+        """The optional knobs, kept apart so one bad field can be dropped wholesale.
+
+        Every one of these is a preview-API field. If a future model release
+        stops accepting any of them the connection fails at setup, so the run
+        loop turns `_tuned_live` off and reconnects on the plain config rather
+        than leaving the user with an assistant that will not start.
+        """
+        out: dict = {}
+
+        # How long the server waits through a pause before deciding your turn is
+        # over. This — not the size of the prompt — is what most of the delay
+        # before a reply actually is, and the default has to suit everybody, so
+        # it is necessarily cautious.
+        turn = get_turn_tuning()
+        if turn.get("enabled", True):
+            detect = types.AutomaticActivityDetection(
+                silence_duration_ms=turn["silence_ms"],
+                prefix_padding_ms=turn["prefix_ms"],
+            )
+            if turn["end_sensitivity"] == "high":
+                detect.end_of_speech_sensitivity = types.EndSensitivity.END_SENSITIVITY_HIGH
+            elif turn["end_sensitivity"] == "low":
+                detect.end_of_speech_sensitivity = types.EndSensitivity.END_SENSITIVITY_LOW
+            if turn["start_sensitivity"] == "high":
+                detect.start_of_speech_sensitivity = types.StartSensitivity.START_SENSITIVITY_HIGH
+            elif turn["start_sensitivity"] == "low":
+                detect.start_of_speech_sensitivity = types.StartSensitivity.START_SENSITIVITY_LOW
+            out["realtime_input_config"] = types.RealtimeInputConfig(
+                automatic_activity_detection=detect)
