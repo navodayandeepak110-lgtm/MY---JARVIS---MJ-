@@ -1170,3 +1170,23 @@ class JarvisLive:
                 id=fc.id, name=name,
                 response={"result": "ok", "silent": True}
             )
+
+        loop   = asyncio.get_event_loop()
+        result = "Done."
+
+        try:
+            if name == "recall_memory":
+                # Local file search: no network, no second model. Kept out of
+                # the executor deliberately — it is a dictionary scan over a few
+                # hundred short strings, and a thread hop would cost more than
+                # the work itself.
+                result = search_memory(args.get("query", ""), limit=8)
+
+            elif name == "undo":
+                if str(args.get("action", "")).lower().strip() == "list":
+                    items = undo_stack.history()
+                    result = ("Things I can undo, most recent first:\n"
+                              + "\n".join(f"{i+1}. {t}" for i, t in enumerate(items))
+                              ) if items else "I have not changed anything I can undo yet."
+                else:
+                    result = await loop.run_in_executor(None, undo_stack.undo_last)
