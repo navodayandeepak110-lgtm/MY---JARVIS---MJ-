@@ -1156,3 +1156,17 @@ class JarvisLive:
         print(f"[JARVIS] 🔧 {name}  {args}")
         self.ui.set_state("THINKING")
 
+
+        if name == "save_memory":
+            category = args.get("category", "notes")
+            key      = args.get("key", "")
+            value    = args.get("value", "")
+            if key and value:
+                update_memory({category: {key: {"value": value}}})
+                print(f"[Memory] 💾 save_memory: {category}/{key} = {value}")
+            if not self.ui.muted:
+                self.ui.set_state("LISTENING")
+            return types.FunctionResponse(
+                id=fc.id, name=name,
+                response={"result": "ok", "silent": True}
+            )
