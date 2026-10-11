@@ -1148,3 +1148,11 @@ class JarvisLive:
             out["thinking_config"] = types.ThinkingConfig(thinking_budget=-1)
 
         return out
+
+    async def _execute_tool(self, fc) -> types.FunctionResponse:
+        name = fc.name
+        args = dict(fc.args or {})
+
+        print(f"[JARVIS] 🔧 {name}  {args}")
+        self.ui.set_state("THINKING")
+
