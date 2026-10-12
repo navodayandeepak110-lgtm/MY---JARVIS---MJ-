@@ -1264,3 +1264,38 @@ class JarvisLive:
                     import os as _os
                     _os._exit(0)
                 asyncio.create_task(_do_shutdown())
+
+            elif self._action_registry.has(name):
+                # file_processor: fall back to the currently-uploaded file when none is given
+                if name == "file_processor" and not args.get("file_path") and self.ui.current_file:
+                    args["file_path"] = self.ui.current_file
+                _ctx = {"player": self.ui, "speak": self.speak,
+                        "response": None, "session_memory": None}
+                r = await loop.run_in_executor(None, lambda: self._action_registry.run(name, args, _ctx))
+                result = r or "Done."
+                # web_search: mirror results to the on-screen content panel
+                if (name == "web_search" and r
+                        and not r.startswith("No results")
+                        and not r.startswith("Search failed")):
+                    _mode  = args.get("mode", "search")
+                    _query = args.get("query") or ", ".join(args.get("items", []))
+                    _label = f"{_mode.upper()} — {_query[:38]}" if _query else _mode.upper()
+                    self.ui.show_content(_label, r)
+
+            else:
+                if self._plugin_registry.has(name):
+                    r = await loop.run_in_executor(
+                        None,
+                        lambda: self._plugin_registry.run(name, args, player=self.ui, session_memory=None)
+                    )
+                    result = r or "Done."
+                else:
+                    result = f"Unknown tool: {name}"
+
+        except Exception as e:
+            result = f"Tool '{name}' failed: {e}"
+            traceback.print_exc()
+            self.speak_error(name, e)
+
+        if not self.ui.muted:
+            self.ui.set_state("LISTENING")
