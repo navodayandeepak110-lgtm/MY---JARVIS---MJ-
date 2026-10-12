@@ -1226,3 +1226,11 @@ class JarvisLive:
                         f"is arriving with this result. Reply once, from what you actually see "
                         f"in it."
                     )
+
+            elif name == "close_camera":
+                self.ui.stop_camera_stream()
+                result = "Camera closed."
+
+            elif name == "system_status":
+                r = await loop.run_in_executor(None, get_system_status)
+                result = str(r)
