@@ -1247,3 +1247,20 @@ class JarvisLive:
                     result = ("Monitoring: " + ", ".join(topics)) if topics else "No topics are being monitored."
                 else:
                     result = "Specify action (add/remove/list) and a topic."
+
+            elif name == "shutdown_jarvis":
+                self.ui.write_log("SYS: Shutdown requested.")
+                async def _do_shutdown():
+                    await self._save_session_summary()
+                    if self.session:
+                        try:
+                            await self.session.send_client_content(
+                                turns={"role": "user", "parts": [{"text": "Say a brief natural goodbye to the user."}]},
+                                turn_complete=True,
+                            )
+                        except Exception:
+                            pass
+                    await asyncio.sleep(1.5)
+                    import os as _os
+                    _os._exit(0)
+                asyncio.create_task(_do_shutdown())
