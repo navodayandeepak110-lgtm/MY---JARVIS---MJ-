@@ -1234,3 +1234,16 @@ class JarvisLive:
             elif name == "system_status":
                 r = await loop.run_in_executor(None, get_system_status)
                 result = str(r)
+
+            elif name == "manage_monitor":
+                action = args.get("action", "").lower().strip()
+                topic  = args.get("topic", "").strip()
+                if action == "add" and topic:
+                    result = await asyncio.to_thread(add_monitor, topic)
+                elif action == "remove" and topic:
+                    result = await asyncio.to_thread(remove_monitor, topic)
+                elif action == "list":
+                    topics = await asyncio.to_thread(list_monitors)
+                    result = ("Monitoring: " + ", ".join(topics)) if topics else "No topics are being monitored."
+                else:
+                    result = "Specify action (add/remove/list) and a topic."
