@@ -1351,3 +1351,23 @@ class JarvisLive:
                 return
             with self._speaking_lock:
                 jarvis_speaking = self._is_speaking
+
+            # ── Barge-in ─────────────────────────────────────────────────────
+            # While JARVIS talks the mic is not streamed, but it is still worth
+            # listening to locally: if the user starts speaking, cut the answer
+            # short the way a person would stop when interrupted.
+            #
+            # The whole difficulty is echo — on speakers the mic hears JARVIS.
+            # So the test is not "is the mic loud" but "is the mic louder than
+            # the echo of what we are playing right now", sustained long enough
+            # that a cough or a keystroke cannot trigger it.
+            if jarvis_speaking:
+                # Nothing is streamed while JARVIS talks.
+                #
+                # Interrupting by voice used to live here: `EchoGuard` can pick a
+                # user out from under our own echo, and `core/echo.py` still does
+                # that for the tail below. Re-enabling is small — classify each
+                # block here and call interrupt() after `required_blocks` of
+                # agreement — but it depends on the listener's room, so it stays
+                # out until it can be tried on real hardware.
+                return
