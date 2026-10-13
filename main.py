@@ -1299,3 +1299,20 @@ class JarvisLive:
 
         if not self.ui.muted:
             self.ui.set_state("LISTENING")
+
+        print(f"[JARVIS] 📤 {name} → {str(result)[:80]}")
+
+        # A tool that declared itself NON_BLOCKING also says when its answer may
+        # re-enter the conversation. Without this the model finishes whatever it
+        # was saying and then reads the result out on top of it — which, for
+        # something like a phone call already ringing, is exactly the noise the
+        # non-blocking call was meant to avoid. Tools that declared nothing get
+        # the API default and behave as they always have.
+        _sched = (self._action_registry.scheduling(name)
+                  or self._plugin_registry.scheduling(name))
+        _extra = {"scheduling": _sched} if _sched else {}
+        return types.FunctionResponse(
+            id=fc.id, name=name,
+            response={"result": result},
+            **_extra
+        )
