@@ -1371,3 +1371,27 @@ class JarvisLive:
                 # agreement — but it depends on the listener's room, so it stays
                 # out until it can be tried on real hardware.
                 return
+
+            # ── Echo tail ────────────────────────────────────────────────────
+            # The speaking flag has dropped but the speakers have not finished.
+            # Sending this to the model is how an assistant hears itself, decides
+            # it was addressed, and answers its own last sentence. The microphone
+            # stays OPEN — the guard only drops blocks that are our own voice, so
+            # replying the instant it stops still works.
+            if self._tail_active():
+                try:
+                    if not self._echo.is_user_speech(
+                            indata, SEND_SAMPLE_RATE, _pcm_level(indata)):
+                        return
+                    self._tail_until = 0.0      # a real voice ends the tail early
+                except Exception:
+                    return
+            elif self._echo._hist:
+                self._echo.reset()
+
+            # ── Push-to-talk ─────────────────────────────────────────────────
+            # When it is on the microphone is closed by default and the chord
+            # opens it, which is the whole point: nothing leaves the machine
+            # unless you are holding the key.
+            if self._ptt_enabled and not self._ptt_held:
+                return
