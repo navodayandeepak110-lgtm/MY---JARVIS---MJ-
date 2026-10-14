@@ -1485,3 +1485,16 @@ class JarvisLive:
             ]},
             turn_complete=True,
         )
+
+        if self._vision_cam_active:
+            # Camera: stay busy until JARVIS has finished speaking the answer,
+            # then close the preview.
+            self._vision_cam_active    = False
+            self._vision_close_pending = True
+        else:
+            self._vision_busy = False
+        return True
+
+    async def _receive_audio(self):
+        print("[JARVIS] 👂 Recv started")
+        out_buf, in_buf = [], []
