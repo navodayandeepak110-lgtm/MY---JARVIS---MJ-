@@ -1395,3 +1395,17 @@ class JarvisLive:
             # unless you are holding the key.
             if self._ptt_enabled and not self._ptt_held:
                 return
+
+            if not self.ui.muted and not self._phone_active:
+                data = indata.tobytes()
+                loop.call_soon_threadsafe(
+                    self.out_queue.put_nowait,
+                    {"data": data, "mime_type": "audio/pcm"}
+                )
+                # Feed the live mic level to the HUD so the waveform reacts to
+                # the user's actual voice while listening. Purely cosmetic — any
+                # failure here must never disturb the mic.
+                try:
+                    self.ui.set_audio_level(_pcm_level(indata))
+                except Exception:
+                    pass
