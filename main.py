@@ -1451,3 +1451,37 @@ class JarvisLive:
         except Exception as e:
             print(f"[JARVIS] ❌ Mic: {e}")
             raise
+
+    async def _flush_pending_vision(self) -> bool:
+        """Send a captured frame immediately after its tool response.
+
+        The frame is already in hand by the time `screen_process` returns — the
+        capture happened inside the tool call. The old flow still made the model
+        speak a turn first and only injected the image on that turn's
+        turn_complete, which cost a whole extra round trip AND produced two
+        spoken answers: one improvised without the picture, then the real one.
+        Sending it here means the model has the tool result and the image before
+        it generates anything, so the user gets one answer, sooner.
+        """
+        if not (self._pending_vision and self.session):
+            return False
+
+        import base64 as _b64
+        img_b, mime_t, question, angle = self._pending_vision
+        self._pending_vision = None
+        b64 = _b64.b64encode(img_b).decode("ascii")
+        print(f"[Vision] 📤 {len(img_b):,} bytes (angle={angle}) → main session")
+
+        # Label the source. Without it the image arrives carrying nothing but
+        # the user's own sentence, and a screenshot of this app — which has a
+        # face in the middle of it — got read as a photo of the user. What the
+        # label *means* is explained once, in the generated [SELF] block.
+        src = ("[IMAGE SOURCE: WEBCAM]" if angle == "camera"
+               else "[IMAGE SOURCE: SCREEN CAPTURE]")
+        await self.session.send_client_content(
+            turns={"role": "user", "parts": [
+                {"inline_data": {"mime_type": mime_t, "data": b64}},
+                {"text": f"{src}\n\n{question}"},
+            ]},
+            turn_complete=True,
+        )
