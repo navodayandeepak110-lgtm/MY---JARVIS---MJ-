@@ -1409,3 +1409,24 @@ class JarvisLive:
                     self.ui.set_audio_level(_pcm_level(indata))
                 except Exception:
                     pass
+
+        try:
+            def _open_mic(dev):
+                return sd.InputStream(
+                    samplerate=SEND_SAMPLE_RATE,
+                    channels=CHANNELS,
+                    dtype="int16",
+                    blocksize=CHUNK_SIZE,
+                    device=dev,
+                    callback=callback,
+                )
+
+            # Which microphone. resolve() returns None for "system default" and
+            # for a saved device that is no longer present — so a headset
+            # unplugged since the last run falls back to the built-in mic
+            # instead of raising on startup and taking the session with it.
+            _mic_name = get_input_device()
+            _mic_dev  = audio_devices.resolve(_mic_name, "input")
+            if _mic_dev is not None:
+                print(f"[JARVIS] 🎤 Input device: {_mic_name}")
+            try:
