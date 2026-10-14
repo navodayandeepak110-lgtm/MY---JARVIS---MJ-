@@ -1430,3 +1430,24 @@ class JarvisLive:
             if _mic_dev is not None:
                 print(f"[JARVIS] 🎤 Input device: {_mic_name}")
             try:
+                _mic_stream = _open_mic(_mic_dev)
+            except Exception as _e:
+                # A device the picker listed but the driver will not open right
+                # now — exclusive mode, a webcam already in use, a virtual mic
+                # whose source went away. Chosen hardware failing must never
+                # mean the assistant cannot hear at all.
+                if _mic_dev is None:
+                    raise
+                print(f"[JARVIS] ⚠️  Mic '{_mic_name}' failed: {_e} — using default")
+                self.ui.write_log(
+                    f"SYS: Microphone '{_mic_name}' unavailable — using system default."
+                )
+                _mic_stream = _open_mic(None)
+
+            with _mic_stream:
+                print("[JARVIS] 🎤 Mic stream open")
+                while True:
+                    await asyncio.sleep(0.1)
+        except Exception as e:
+            print(f"[JARVIS] ❌ Mic: {e}")
+            raise
