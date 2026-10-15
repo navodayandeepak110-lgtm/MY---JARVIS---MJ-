@@ -1555,3 +1555,17 @@ class JarvisLive:
                             if txt:
                                 in_buf.append(txt)
                                 self._last_user_speech = time.monotonic()
+
+                        if sc.turn_complete:
+                            print("[JARVIS] ✅ Turn complete")
+                            if self._turn_done_event:
+                                self._turn_done_event.set()
+
+                            # If this turn_complete ends an interrupted response, clear the
+                            # flag and skip all further processing for that turn.
+                            if self._interrupted:
+                                self._interrupted = False
+                                in_buf  = []
+                                out_buf = []
+                                self._visemes.reset()
+                                continue
