@@ -1515,3 +1515,17 @@ class JarvisLive:
                             if self._resume_handle is None:
                                 print("[JARVIS] 🔗 Session resumption armed")
                             self._resume_handle = _sru.new_handle
+
+                    if response.data:
+                        print(f"[JARVIS] 🔊 Audio received: {len(response.data)} bytes")
+                        if self._interrupted:
+                            pass  # discard: interrupted
+                        else:
+                            if self._turn_done_event and self._turn_done_event.is_set():
+                                self._turn_done_event.clear()
+                            # Split into ~50 ms chunks so interrupt() stops audio within 50 ms
+                            # (24000 Hz × 2 bytes/sample × 0.05 s = 2400 bytes per slice)
+                            _audio_data = response.data
+                            _SLICE = 2400
+                            for _i in range(0, len(_audio_data), _SLICE):
+                                self.audio_in_queue.put_nowait(_audio_data[_i : _i + _SLICE])
