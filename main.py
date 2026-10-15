@@ -1498,3 +1498,20 @@ class JarvisLive:
     async def _receive_audio(self):
         print("[JARVIS] 👂 Recv started")
         out_buf, in_buf = [], []
+
+        try:
+            while True:
+                async for response in self.session.receive():
+
+                    # ── Session resumption ───────────────────────────────────
+                    # The server sends this periodically. `resumable` goes false
+                    # while a turn is mid-flight — replaying a handle from that
+                    # moment is what the flag exists to prevent — so only
+                    # resumable handles are kept. This is three lines and it is
+                    # the entire fix for "every reconnect forgets everything".
+                    _sru = getattr(response, "session_resumption_update", None)
+                    if _sru is not None:
+                        if getattr(_sru, "resumable", False) and getattr(_sru, "new_handle", None):
+                            if self._resume_handle is None:
+                                print("[JARVIS] 🔗 Session resumption armed")
+                            self._resume_handle = _sru.new_handle
