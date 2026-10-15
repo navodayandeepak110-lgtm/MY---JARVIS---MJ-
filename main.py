@@ -1569,3 +1569,35 @@ class JarvisLive:
                                 out_buf = []
                                 self._visemes.reset()
                                 continue
+
+                            full_in = " ".join(in_buf).strip()
+                            if full_in:
+                                self._last_out_logged = ""   # new exchange
+                                self.ui.write_log(f"You: {full_in}")
+                                self._session_log.append(f"User: {full_in}")
+                                if self._dashboard:
+                                    asyncio.create_task(self._dashboard.broadcast({
+                                        "type": "log", "speaker": "user",
+                                        "text": full_in,
+                                        "ts": datetime.now().isoformat(),
+                                    }))
+                            in_buf = []
+
+                            full_out = " ".join(out_buf).strip()
+                            # Second line of defence: even if a repeat slips
+                            # into a *fresh* buffer after a flush, never log the
+                            # same answer (or a tail of it) twice in a row.
+                            if full_out and len(full_out) >= _REPEAT_MIN and self._last_out_logged:
+                                if full_out in self._last_out_logged:
+                                    full_out = ""
+                            if full_out:
+                                self._last_out_logged = full_out
+                                self.ui.write_log(f"{self._asst_name}: {full_out}")
+                                self._session_log.append(f"{self._asst_name}: {full_out}")
+                                if self._dashboard:
+                                    asyncio.create_task(self._dashboard.broadcast({
+                                        "type": "log", "speaker": "jarvis",
+                                        "text": full_out,
+                                        "ts": datetime.now().isoformat(),
+                                    }))
+                            out_buf = []
