@@ -1529,3 +1529,29 @@ class JarvisLive:
                             _SLICE = 2400
                             for _i in range(0, len(_audio_data), _SLICE):
                                 self.audio_in_queue.put_nowait(_audio_data[_i : _i + _SLICE])
+
+                    if response.server_content:
+                        sc = response.server_content
+
+                        if sc.output_transcription and sc.output_transcription.text:
+                            txt = _clean_transcript(sc.output_transcription.text)
+                            # A turn that involves a tool call passes through
+                            # several turn_completes, and the API re-sends the
+                            # tail of the transcript across them. Comparing only
+                            # against the previous chunk missed that — once
+                            # out_buf had been flushed and emptied, the repeat
+                            # sailed straight back in, which logged the answer
+                            # twice AND made the avatar mouth it twice.
+                            if txt and not _is_repeat_chunk(txt, out_buf):
+                                out_buf.append(txt)
+                                # Hand the words to the mouth as they arrive, so
+                                # the avatar can form the consonants the audio
+                                # alone cannot show. Pure string work — it adds
+                                # nothing measurable to the response path.
+                                self._visemes.feed_text(txt)
+
+                        if sc.input_transcription and sc.input_transcription.text:
+                            txt = _clean_transcript(sc.input_transcription.text)
+                            if txt:
+                                in_buf.append(txt)
+                                self._last_user_speech = time.monotonic()
