@@ -1610,3 +1610,18 @@ class JarvisLive:
                                     await asyncio.sleep(2.0)
                                     self.ui.stop_camera_stream()
                                 asyncio.create_task(_cam_close())
+
+                    if response.tool_call:
+                        fn_responses = []
+                        for fc in response.tool_call.function_calls:
+                            print(f"[JARVIS] 📞 {fc.name}")
+                            fr = await self._execute_tool(fc)
+                            fn_responses.append(fr)
+                        await self.session.send_tool_response(
+                            function_responses=fn_responses
+                        )
+                        await self._flush_pending_vision()
+        except Exception as e:
+            print(f"[JARVIS] ❌ Recv: {e}")
+            traceback.print_exc()
+            raise
