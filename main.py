@@ -1625,3 +1625,34 @@ class JarvisLive:
             print(f"[JARVIS] ❌ Recv: {e}")
             traceback.print_exc()
             raise
+
+    async def _play_audio(self):
+        print("[JARVIS] 🔊 Play started")
+
+        _spk_name = get_output_device()
+        _spk_dev  = audio_devices.resolve(_spk_name, "output")
+        if _spk_dev is not None:
+            print(f"[JARVIS] 🔊 Output device: {_spk_name}")
+
+        def _open_spk(dev):
+            st = sd.RawOutputStream(
+                samplerate=RECEIVE_SAMPLE_RATE,
+                channels=CHANNELS,
+                dtype="int16",
+                blocksize=CHUNK_SIZE,
+                device=dev,
+            )
+            st.start()
+            return st
+
+        try:
+            stream = _open_spk(_spk_dev)
+        except Exception as _e:
+            # A chosen output that the host API accepts by name but refuses to
+            # open (exclusive mode, wrong sample rate, device asleep) must not
+            # cost the user their voice. Fall back to the default and say so.
+            if _spk_dev is None:
+                raise
+            print(f"[JARVIS] ⚠️  Output device '{_spk_name}' failed: {_e} — using default")
+            self.ui.write_log(f"SYS: Speaker '{_spk_name}' unavailable — using system default.")
+            stream = _open_spk(None)
