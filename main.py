@@ -1669,3 +1669,32 @@ class JarvisLive:
                   f"→ echo tail {(self._out_latency + _TAIL_MARGIN)*1000:.0f} ms")
         except Exception:
             pass
+
+        try:
+            while True:
+                try:
+                    chunk = await asyncio.wait_for(
+                        self.audio_in_queue.get(),
+                        timeout=0.1
+                    )
+                except asyncio.TimeoutError:
+                    if (
+                        self._turn_done_event
+                        and self._turn_done_event.is_set()
+                        and self.audio_in_queue.empty()
+                    ):
+                        self.set_speaking(False)
+                        self._turn_done_event.clear()
+                    continue
+
+                self.set_speaking(True)
+
+                # Batch all immediately-available chunks into one write to reduce
+                # thread-pool round-trips (was one asyncio.to_thread per 50ms slice).
+                # Cap at ~200 ms so interrupt() still stops audio within ~200 ms.
+                batch = bytearray(chunk)
+                while len(batch) < 9600:   # 9600 bytes ≈ 200 ms at 24 kHz / 16-bit mono
+                    try:
+                        batch.extend(self.audio_in_queue.get_nowait())
+                    except asyncio.QueueEmpty:
+                        break
