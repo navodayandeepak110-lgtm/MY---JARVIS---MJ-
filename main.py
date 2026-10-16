@@ -1656,3 +1656,16 @@ class JarvisLive:
             print(f"[JARVIS] ⚠️  Output device '{_spk_name}' failed: {_e} — using default")
             self.ui.write_log(f"SYS: Speaker '{_spk_name}' unavailable — using system default.")
             stream = _open_spk(None)
+
+        # Ask the device how far behind the speakers actually are, rather than
+        # assuming. This is what the echo tail is sized from, so a machine with a
+        # large audio buffer gets a correspondingly longer guard — and one with a
+        # tiny buffer is not penalised with a delay it does not need.
+        try:
+            lat = float(getattr(stream, "latency", 0.0) or 0.0)
+            if 0.0 < lat < 1.0:
+                self._out_latency = lat
+            print(f"[JARVIS] 🔊 Output latency {self._out_latency*1000:.0f} ms "
+                  f"→ echo tail {(self._out_latency + _TAIL_MARGIN)*1000:.0f} ms")
+        except Exception:
+            pass
