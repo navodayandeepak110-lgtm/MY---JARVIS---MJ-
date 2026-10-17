@@ -1782,3 +1782,20 @@ class JarvisLive:
         lang = _val("language")
         name = _val("name")
         time_str = datetime.now().strftime("%H:%M")
+
+        # Start fetching news immediately — runs in parallel while phase 1 plays
+        loop = asyncio.get_event_loop()
+        news_future = loop.run_in_executor(None, _fetch_news_sync, "top world news today")
+
+        await asyncio.sleep(0.3)
+        if not self.session:
+            return
+
+        # ── Phase 1: instant greeting ─────────────────────────────────────────
+        # The briefing fires before the user has said anything, so the
+        # remembered language is the only signal there is. It is a starting
+        # point, not a setting: the moment they reply, their language wins.
+        lang_clause = (f" Speak this greeting in {lang}, then follow the "
+                       f"user's own language from their first reply onward."
+                       if lang else "")
+        name_clause = f" Address the user as {name}." if name else ""
