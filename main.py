@@ -1760,3 +1760,25 @@ class JarvisLive:
             self.set_speaking(False)
             stream.stop()
             stream.close()
+
+    # ── Morning briefing ────────────────────────────────────────────────────────
+
+    async def _send_startup_briefing(self) -> None:
+        """
+        Two-phase briefing optimized for speed:
+          Phase 1 — instant greeting (no tools) → speech starts in <1s
+          Phase 2 — news pre-fetched in a background thread while Phase 1 plays,
+                    delivered as ready text (no Gemini tool-call round-trip) and
+                    shown on the UI content panel. Waits for turn_complete event
+                    instead of a fixed sleep so there is no unnecessary gap.
+        """
+        memory   = load_memory()
+        identity = memory.get("identity", {})
+
+        def _val(k: str) -> str:
+            e = identity.get(k, {})
+            return (e.get("value", "") if isinstance(e, dict) else str(e)).strip()
+
+        lang = _val("language")
+        name = _val("name")
+        time_str = datetime.now().strftime("%H:%M")
