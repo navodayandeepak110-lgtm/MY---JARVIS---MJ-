@@ -1698,3 +1698,53 @@ class JarvisLive:
                         batch.extend(self.audio_in_queue.get_nowait())
                     except asyncio.QueueEmpty:
                         break
+
+                # Drive the HUD waveform and the avatar's mouth from JARVIS's
+                # own voice. The batch is up to 200 ms long, so we hand over a
+                # *schedule* of 20 ms viseme frames instead of a single averaged
+                # level and let the HUD play it out in step with the audio.
+                try:
+                    pcm = np.frombuffer(bytes(batch), dtype=np.int16)
+                    hop = _VIS_HOP / RECEIVE_SAMPLE_RATE
+                    frames = _pcm_visemes(pcm, sr=RECEIVE_SAMPLE_RATE)
+                    # When does this batch become audible? The stream was
+                    # started at launch and its callback has been pulling
+                    # silence ever since, so the first bytes of a reply reach
+                    # the speaker about one callback period later — NOT one
+                    # buffer later. `stream.latency` reports the buffer's
+                    # capacity, which is how much can be queued ahead, and on
+                    # Windows that is commonly 300-500 ms. Anchoring on it put
+                    # the entire schedule a buffer late; that is the half second
+                    # of lag, and it grew with whatever the device reported.
+                    #
+                    # After the anchor nothing needs measuring: the device
+                    # consumes at exactly realtime, so each batch sounds one
+                    # batch-duration after the one before it. The cursor is
+                    # re-anchored only when it leaves the range physically
+                    # possible — behind `now` means the device drained and this
+                    # batch starts a fresh stretch of speech, while further
+                    # ahead than the buffer can hold means it has drifted.
+                    now = time.time()
+                    horizon = self._out_latency + _CURSOR_SLACK
+                    if not (now <= self._play_cursor <= now + horizon):
+                        self._play_cursor = now + _FIRST_SOUND
+                    at = self._play_cursor
+                    # Advance by the batch's own duration whether or not it
+                    # yielded frames, so a block too short to analyse cannot
+                    # shift everything after it out of step with the audio.
+                    self._play_cursor += pcm.size / RECEIVE_SAMPLE_RATE
+                    if frames:
+                        frames = self._visemes.frames(frames, hop)
+                        self.ui.push_visemes(frames, hop, at)
+                        # Barge-in needs to know what we are playing, not just
+                        # how loud: the guard subtracts this from the microphone.
+                        self._out_level = max(f[0] for f in frames)
+                        self._echo.note_output(pcm, RECEIVE_SAMPLE_RATE,
+                                               self._out_level)
+                    else:
+                        lvl = _pcm_level(pcm)
+                        self.ui.set_audio_level(lvl)
+                        self._out_level = lvl
+                        self._echo.note_output(pcm, RECEIVE_SAMPLE_RATE, lvl)
+                except Exception:
+                    pass
