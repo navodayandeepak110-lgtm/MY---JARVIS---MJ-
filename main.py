@@ -1748,3 +1748,15 @@ class JarvisLive:
                         self._echo.note_output(pcm, RECEIVE_SAMPLE_RATE, lvl)
                 except Exception:
                     pass
+
+                try:
+                    await asyncio.to_thread(stream.write, bytes(batch))
+                except (RuntimeError, asyncio.CancelledError):
+                    break   # executor shutting down — exit cleanly
+        except Exception as e:
+            print(f"[JARVIS] ❌ Play: {e}")
+            raise
+        finally:
+            self.set_speaking(False)
+            stream.stop()
+            stream.close()
