@@ -1854,3 +1854,19 @@ class JarvisLive:
                     await asyncio.sleep(0.8)
                 else:
                     await asyncio.sleep(1.0)
+
+                try:
+                    news_text = await asyncio.wait_for(news_done, timeout=8.0)
+                except Exception as e:
+                    self.ui.write_log(f"SYS: News fetch timed out/failed: {e!r}")
+                    news_text = ""
+
+                if not self.session:
+                    return
+
+                failed = (not news_text) or news_text.startswith(
+                    ("No news found", "Search failed", "Please provide")
+                )
+                if not failed:
+                    # Show on UI content panel immediately
+                    self.ui.show_content("NEWS — top world news today", news_text)
