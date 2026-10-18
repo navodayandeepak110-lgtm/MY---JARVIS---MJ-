@@ -1812,3 +1812,18 @@ class JarvisLive:
             session_clause = (
                 f" Also briefly and naturally mention that {_when}: {last['summary']}"
             )
+
+        p1 = (
+            f"Greet the user warmly, mention it is {time_str}, and say you are fetching today's news now.{session_clause} "
+            f"Keep it to 2 short sentences max. Do not call any tools.{lang_clause}{name_clause}"
+        )
+
+        # Clear the turn-done event so we can wait for Phase 1 to finish
+        if self._turn_done_event:
+            self._turn_done_event.clear()
+
+        await self.session.send_client_content(
+            turns={"role": "user", "parts": [{"text": p1}]},
+            turn_complete=True,
+        )
+        print("[JARVIS] Briefing phase 1 (greeting) sent.")
