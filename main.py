@@ -1870,3 +1870,29 @@ class JarvisLive:
                 if not failed:
                     # Show on UI content panel immediately
                     self.ui.show_content("NEWS — top world news today", news_text)
+
+                    p2 = (
+                        f"[BRIEFING] Here are today's top news headlines:\n{news_text}\n\n"
+                        "Pick ONE headline, summarise it in one sentence, then say the full list "
+                        f"is displayed on screen. Do not call any tools.{lang_str}"
+                    )
+                else:
+                    self.ui.write_log(
+                        f"SYS: News unavailable — backend returned: {news_text[:120]!r}"
+                    )
+                    p2 = (
+                        "News headlines could not be fetched right now. "
+                        f"Let the user know briefly.{lang_str}"
+                    )
+
+                await self.session.send_client_content(
+                    turns={"role": "user", "parts": [{"text": p2}]},
+                    turn_complete=True,
+                )
+                print("[JARVIS] Briefing phase 2 (news) sent.")
+            except Exception as e:
+                print(f"[Briefing] Phase 2 error: {e}")
+                print(f"[JARVIS] Briefing phase 2 failed: {e}")
+                self.ui.write_log("SYS: Could not fetch the news for the briefing.")
+
+        asyncio.create_task(_deliver_news())
