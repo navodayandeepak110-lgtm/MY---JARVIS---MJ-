@@ -1827,3 +1827,30 @@ class JarvisLive:
             turn_complete=True,
         )
         print("[JARVIS] Briefing phase 1 (greeting) sent.")
+
+        # ── Phase 2: fire as soon as Phase 1 audio is done ───────────────────
+        async def _deliver_news():
+            try:
+                lang_str = (f" Speak in {lang} unless the user has since "
+                            f"spoken another language, in which case use theirs."
+                            if lang else "")
+
+                # Wait for news fetch (already running) and Phase 1 turn-complete
+                # in parallel — whichever takes longer determines the wait time
+                news_done   = asyncio.wrap_future(news_future)
+                turn_waited = False
+                if self._turn_done_event:
+                    try:
+                        await asyncio.wait_for(self._turn_done_event.wait(), timeout=6.0)
+                        turn_waited = True
+                    except asyncio.TimeoutError:
+                        pass
+
+                # Extra buffer: turn_complete fires when Gemini finishes *generating*
+                # Phase 1, but audio may still be playing.  Waiting a beat here
+                # prevents Phase 2 audio from arriving while Phase 1 is mid-sentence
+                # (which sounds like a "repeated first response" to the user).
+                if turn_waited:
+                    await asyncio.sleep(0.8)
+                else:
+                    await asyncio.sleep(1.0)
