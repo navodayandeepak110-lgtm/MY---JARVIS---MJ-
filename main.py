@@ -1799,3 +1799,16 @@ class JarvisLive:
                        f"user's own language from their first reply onward."
                        if lang else "")
         name_clause = f" Address the user as {name}." if name else ""
+
+        # Inject last session context if available — pop removes it so it's never repeated
+        last = await asyncio.to_thread(pop_last_session)
+        session_clause = ""
+        if last:
+            try:
+                _delta = (datetime.now() - datetime.strptime(last["date"], "%Y-%m-%d")).days
+                _when  = "earlier today" if _delta == 0 else ("yesterday" if _delta == 1 else f"{_delta} days ago")
+            except Exception:
+                _when = "last time"
+            session_clause = (
+                f" Also briefly and naturally mention that {_when}: {last['summary']}"
+            )
