@@ -1981,3 +1981,22 @@ class JarvisLive:
                     except Exception as e:
                         print(f"[Monitor] ⚠️ Background check error: {e}")
             await asyncio.sleep(1800)     # check every 30 minutes
+
+    # ── Proactive mode ──────────────────────────────────────────────────────────
+
+    async def _run_proactive_mode(self) -> None:
+        """
+        Background task: periodically checks if the user has been silent long enough,
+        then hands time + memory context to Gemini so it can decide what (if anything)
+        to say proactively. No hardcoded rules — Gemini makes the call.
+        """
+        while True:
+            await asyncio.sleep(60)   # evaluate once per minute
+
+            if not self.session or not self._awake:
+                continue
+
+            with self._speaking_lock:
+                speaking = self._is_speaking
+            if speaking:
+                continue
