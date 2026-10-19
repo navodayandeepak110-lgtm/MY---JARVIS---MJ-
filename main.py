@@ -1948,3 +1948,16 @@ class JarvisLive:
                 )
             except Exception as e:
                 print(f"[Monitor] ⚠️ Could not send alert: {e}")
+
+    # ── Background monitor ──────────────────────────────────────────────────────
+
+    async def _run_background_monitor(self) -> None:
+        """Check user-configured topics once per day; speak alerts when new headlines appear."""
+        await asyncio.sleep(300)          # wait 5 min after startup before first check
+        while True:
+            if self.session and self._awake:
+                # Don't interrupt if user spoke recently or JARVIS is mid-sentence
+                with self._speaking_lock:
+                    speaking = self._is_speaking
+                recent_speech = (time.monotonic() - self._last_user_speech) < 30
+                if not speaking and not recent_speech:
