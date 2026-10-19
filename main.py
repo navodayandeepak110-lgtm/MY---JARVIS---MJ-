@@ -1896,3 +1896,33 @@ class JarvisLive:
                 self.ui.write_log("SYS: Could not fetch the news for the briefing.")
 
         asyncio.create_task(_deliver_news())
+
+    # ── Session memory ──────────────────────────────────────────────────────────
+
+    async def _save_session_summary(self) -> None:
+        """Summarise the current session in 1-2 sentences and save to long_term.json."""
+        log = self._session_log
+        if len(log) < 3:          # need at least one exchange to be worth saving
+            return
+        self._session_log = []    # reset immediately so the next session starts clean
+
+        memory = load_memory()
+        lang_entry = memory.get("identity", {}).get("language", {})
+        lang = (lang_entry.get("value", "") if isinstance(lang_entry, dict) else str(lang_entry)).strip()
+        lang = lang or "English"
+
+        convo = "\n".join(log[-40:])   # cap at last 40 turns to stay within token budget
+        prompt = (
+            f"Summarize this conversation in 1-2 sentences in {lang}. "
+            "Focus on what the user accomplished or discussed. "
+            "Output ONLY the summary text, nothing else:\n\n" + convo
+        )
+        try:
+            from core import gemini
+            summary = await asyncio.to_thread(
+                gemini.text, prompt, gemini.SMART, None, 30_000,
+            )
+            if summary:
+                save_session_summary(summary, lang)
+        except Exception as e:
+            print(f"[Memory] ⚠️ Session summary failed: {e}")
