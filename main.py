@@ -1926,3 +1926,25 @@ class JarvisLive:
                 save_session_summary(summary, lang)
         except Exception as e:
             print(f"[Memory] ⚠️ Session summary failed: {e}")
+
+    # ── System monitor ──────────────────────────────────────────────────────────
+
+    async def _run_system_monitor(self) -> None:
+        """Background task: voice alerts when metrics exceed thresholds."""
+        while True:
+            await asyncio.sleep(10)
+            alert = await asyncio.to_thread(self._sys_monitor.check)
+            if not alert or not self.session or not self._awake:
+                continue
+            # Don't interrupt an active conversation
+            with self._speaking_lock:
+                speaking = self._is_speaking
+            if speaking or (time.monotonic() - self._last_user_speech) < 10:
+                continue
+            try:
+                await self.session.send_client_content(
+                    turns={"role": "user", "parts": [{"text": alert}]},
+                    turn_complete=True,
+                )
+            except Exception as e:
+                print(f"[Monitor] ⚠️ Could not send alert: {e}")
