@@ -1961,3 +1961,23 @@ class JarvisLive:
                     speaking = self._is_speaking
                 recent_speech = (time.monotonic() - self._last_user_speech) < 30
                 if not speaking and not recent_speech:
+                    try:
+                        alerts = await asyncio.to_thread(monitor_check_all)
+                        memory = load_memory()
+                        lang_e = memory.get("identity", {}).get("language", {})
+                        lang   = (lang_e.get("value", "") if isinstance(lang_e, dict) else str(lang_e)).strip() or "English"
+                        for alert in alerts:
+                            msg = (
+                                f"{alert}\n\n"
+                                f"Inform the user about this development naturally in {lang}. "
+                                "One brief sentence only."
+                            )
+                            await self.session.send_client_content(
+                                turns={"role": "user", "parts": [{"text": msg}]},
+                                turn_complete=True,
+                            )
+                            print("[JARVIS] Monitor alert sent.")
+                            await asyncio.sleep(6)   # gap between consecutive alerts
+                    except Exception as e:
+                        print(f"[Monitor] ⚠️ Background check error: {e}")
+            await asyncio.sleep(1800)     # check every 30 minutes
