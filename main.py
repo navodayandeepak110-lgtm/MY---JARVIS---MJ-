@@ -2047,3 +2047,36 @@ class JarvisLive:
     def _on_phone_connected(self) -> None:
         self.ui.write_log("SYS: Phone connected via Remote Dashboard.")
         self.ui.notify_phone_connected()
+
+    # ── dashboard command relay ─────────────────────────────────────────────
+
+    async def _process_dashboard_commands(self) -> None:
+        while True:
+            try:
+                text = await asyncio.wait_for(
+                    self._dashboard._command_queue.get(), timeout=0.5
+                )
+                if not text:
+                    continue
+                # Wait up to 8s for session to become ready after a wake
+                for _ in range(80):
+                    if self.session:
+                        break
+                    await asyncio.sleep(0.1)
+                if self.session:
+                    # A remote command is deliberate control and the phone user
+                    # has no desktop WAKE button — so it wakes JARVIS if asleep.
+                    if self._wake_enabled and not self._awake:
+                        self.wake(reason="remote command")
+                    await self.session.send_client_content(
+                        turns={"role": "user", "parts": [{"text": text}]},
+                        turn_complete=True,
+                    )
+                    self.ui.write_log(f"[Web]: {text}")
+                else:
+                    print(f"[Dashboard] Dropped command (no session): {text}")
+            except asyncio.TimeoutError:
+                pass
+            except Exception as e:
+                print(f"[Dashboard] Command error: {e}")
+                await asyncio.sleep(0.5)
