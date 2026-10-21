@@ -2080,3 +2080,20 @@ class JarvisLive:
             except Exception as e:
                 print(f"[Dashboard] Command error: {e}")
                 await asyncio.sleep(0.5)
+
+    # ── main loop ───────────────────────────────────────────────────────────
+
+    async def run(self):
+        self._loop = asyncio.get_event_loop()
+        self._reconnect_event = asyncio.Event()
+
+        # ── Wire the shared core services to the interface ───────────────────
+        # The confirmation gate is useless without a way to ask, and a memory
+        # trim is invisible without a way to say so. Both are bound once here
+        # rather than passed down through every action signature.
+        confirm_gate.bind(
+            show = self.ui.show_confirm,
+            hide = self.ui.hide_confirm,
+            log  = self.ui.write_log,
+        )
+        set_trim_notifier(self.ui.write_log)
