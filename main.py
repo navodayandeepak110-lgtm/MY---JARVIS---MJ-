@@ -2097,3 +2097,12 @@ class JarvisLive:
             log  = self.ui.write_log,
         )
         set_trim_notifier(self.ui.write_log)
+
+        # Tell the device picker the exact rates the streams open at, from the
+        # constants that actually open them — so it can never list a device that
+        # cannot be opened at them.
+        audio_devices.configure(SEND_SAMPLE_RATE, RECEIVE_SAMPLE_RATE)
+
+        # Enumerate audio devices off-thread. The settings drawer must never pay
+        # for host-API enumeration on the Qt thread.
+        audio_devices.prefetch()
