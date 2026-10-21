@@ -2118,3 +2118,27 @@ class JarvisLive:
         except Exception as e:
             print(f"[Dashboard] Disabled: {e}")
             self._dashboard = None
+
+        while True:
+            try:
+                print("[JARVIS] Connecting...")
+                self.ui.set_state("THINKING")
+                _resumed_with = self._resume_handle is not None
+                config = self._build_config()
+
+                # Fresh client on every reconnect — avoids stale HTTP session state
+                # v1alpha carries proactive audio; if it gets rejected we fall
+                # back to v1beta.
+                client = genai.Client(
+                    api_key=_get_api_key(),
+                    http_options={"api_version": "v1alpha" if self._enhanced_live else "v1beta"}
+                )
+
+                async with (
+                    client.aio.live.connect(model=LIVE_MODEL, config=config) as session,
+                    _TaskGroup() as tg,
+                ):
+                    self.session          = session
+                    self.audio_in_queue   = asyncio.Queue()
+                    self.out_queue        = asyncio.Queue(maxsize=200)
+                    self._turn_done_event = asyncio.Event()
