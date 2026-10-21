@@ -2000,3 +2000,25 @@ class JarvisLive:
                 speaking = self._is_speaking
             if speaking:
                 continue
+
+            if not self._proactive.should_trigger(self._last_user_speech):
+                continue
+
+            self._proactive.mark_triggered()
+
+            try:
+                memory       = await asyncio.to_thread(load_memory)
+                monitors     = await asyncio.to_thread(list_monitors)
+                recent_turns = self._session_log[-8:] if self._session_log else []
+                prompt = self._proactive.build_prompt(
+                    memory       = memory,
+                    monitors     = monitors or None,
+                    recent_turns = recent_turns or None,
+                )
+                await self.session.send_client_content(
+                    turns={"role": "user", "parts": [{"text": prompt}]},
+                    turn_complete=True,
+                )
+                print("[JARVIS] Proactive check-in.")
+            except Exception as e:
+                print(f"[Proactive] ⚠️ {e}")
