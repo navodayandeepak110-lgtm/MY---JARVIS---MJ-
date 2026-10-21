@@ -2142,3 +2142,34 @@ class JarvisLive:
                     self.audio_in_queue   = asyncio.Queue()
                     self.out_queue        = asyncio.Queue(maxsize=200)
                     self._turn_done_event = asyncio.Event()
+
+                    # Reset transient state that must not carry over from a previous session
+                    self._pending_vision       = None
+                    self._vision_cam_active    = False
+                    self._vision_close_pending = False
+                    self._vision_busy          = False
+                    self._vision_last_time     = 0.0
+                    self._interrupted          = False
+
+                    print("[JARVIS] Connected.")
+                    if _resumed_with:
+                        # Say it plainly: the difference between "it reconnected"
+                        # and "it reconnected and still knows what we were doing"
+                        # is the whole point, and it is invisible otherwise.
+                        self.ui.write_log("SYS: Reconnected — conversation restored.")
+
+                    # Wake word: if enabled, come up ASLEEP (mic gated, silent)
+                    # until the user says "Hey Jarvis" or taps wake in the UI.
+                    if self._wake_enabled:
+                        self._ensure_wake_detector()
+                        self._awake = False
+                        self.ui.set_state("SLEEPING")
+                        self.ui.write_log("SYS: JARVIS online — sleeping. Say 'Hey Jarvis' to wake me.")
+                    else:
+                        self._awake = True
+                        self.ui.set_state("LISTENING")
+                        self.ui.write_log("SYS: JARVIS online.")
+
+                    if self._dashboard:
+                        await self._dashboard.broadcast({"type": "status", "state": "active"})
+
