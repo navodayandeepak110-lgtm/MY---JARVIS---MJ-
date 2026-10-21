@@ -2043,3 +2043,7 @@ class JarvisLive:
                     self.out_queue.put_nowait(chunk)
                 except asyncio.QueueFull:
                     pass
+
+    def _on_phone_connected(self) -> None:
+        self.ui.write_log("SYS: Phone connected via Remote Dashboard.")
+        self.ui.notify_phone_connected()
