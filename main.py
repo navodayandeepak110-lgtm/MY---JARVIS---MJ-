@@ -2173,3 +2173,23 @@ class JarvisLive:
                     if self._dashboard:
                         await self._dashboard.broadcast({"type": "status", "state": "active"})
 
+                    self._reconnect_event.clear()  # ignore requests from before this session
+                    tg.create_task(self._watch_reconnect())
+                    tg.create_task(self._send_realtime())
+                    tg.create_task(self._listen_audio())
+                    tg.create_task(self._receive_audio())
+                    tg.create_task(self._play_audio())
+                    tg.create_task(self._run_system_monitor())
+                    tg.create_task(self._run_background_monitor())
+                    tg.create_task(self._run_proactive_mode())
+                    tg.create_task(self._run_sleep_watch())
+                    if self._dashboard:
+                        tg.create_task(self._relay_phone_audio())
+
+                    # Morning briefing — fires once per process launch (if enabled).
+                    # Skipped in wake-word mode: it comes up asleep, and a briefing
+                    # would mean talking while "asleep".
+                    if not self._briefing_sent and get_brief_enabled() and self._awake:
+                        self._briefing_sent = True
+                        tg.create_task(self._send_startup_briefing())
+
