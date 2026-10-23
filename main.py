@@ -2193,3 +2193,24 @@ class JarvisLive:
                         self._briefing_sent = True
                         tg.create_task(self._send_startup_briefing())
 
+            except KeyboardInterrupt:
+                raise
+            except SystemExit:
+                raise
+            except BaseException as e:
+                # Catches both Exception and BaseExceptionGroup (Python 3.11+
+                # TaskGroup raises BaseExceptionGroup when tasks are cancelled
+                # externally, which `except Exception` would miss, letting the
+                # exception escape the while-loop and causing asyncio.run() to
+                # start shutdown — resulting in "executor after shutdown" errors).
+                # Voluntary reconnect (voice change) — not an error. Rebuild the
+                # session immediately with no backoff and no scary logs.
+                if _is_reconnect_signal(e):
+                    print("[JARVIS] Voluntary reconnect requested.")
+                    if not _keep_context_of(e):
+                        # A deliberate clean slate (voice change) — drop the
+                        # handle so the next connect really does start empty.
+                        self._resume_handle = None
+                    self._conn_backoff = 0
+                    continue
+
