@@ -2277,3 +2277,23 @@ class JarvisLive:
                     _conn_backoff = 3
                     continue
 
+                # Network / timeout errors — log clearly and back off
+                is_net_err = any(k in err_str for k in (
+                    "TimeoutError", "timed out", "getaddrinfo", "CancelledError",
+                    "ConnectionRefusedError", "OSError", "Cannot connect",
+                ))
+                if is_net_err:
+                    _conn_backoff = min(getattr(self, "_conn_backoff", 3) * 2, 60)
+                    self._conn_backoff = _conn_backoff
+                    self.ui.write_log(
+                        f"NET: Connection failed — retrying in {_conn_backoff}s. "
+                        "(a VPN may be required)"
+                    )
+                else:
+                    self._conn_backoff = 3
+            finally:
+                self.session = None
+                # Only save if there was a real conversation (≥3 turns)
+                if len(self._session_log) >= 3:
+                    asyncio.create_task(self._save_session_summary())
+
