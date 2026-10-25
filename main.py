@@ -2266,3 +2266,14 @@ class JarvisLive:
                     )
                     continue
 
+                # Invalid API key — stop hammering the API, prompt re-configuration
+                if "API key not valid" in err_str or "1007" in err_str:
+                    self.ui.write_log("ERR: API key invalid — please re-enter your key.")
+                    self.ui.set_state("SLEEPING")
+                    self.ui.prompt_reconfig()
+                    while not self.ui._win._ready:
+                        await asyncio.sleep(1)
+                    print("[JARVIS] New API key saved — reconnecting...")
+                    _conn_backoff = 3
+                    continue
+
