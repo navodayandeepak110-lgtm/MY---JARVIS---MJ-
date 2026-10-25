@@ -2232,3 +2232,37 @@ class JarvisLive:
                     self._conn_backoff = 0
                     continue
 
+                err_str = str(e)
+                print(f"[JARVIS] Error ({type(e).__name__}): {e}")
+                traceback.print_exc()
+
+                # Turn-taking / media / thinking knobs rejected by the server
+                # (preview API drift) — drop them first, because they are the
+                # newest fields and the cheapest to lose. Proactive audio is
+                # tried again on the next pass if the error persists.
+                if self._tuned_live and (
+                    "INVALID_ARGUMENT" in err_str
+                    or "Unknown name" in err_str
+                    or "unexpected keyword" in err_str
+                    or "realtime_input" in err_str.lower()
+                    or "media_resolution" in err_str.lower()
+                    or "thinking" in err_str.lower()
+                ):
+                    self._tuned_live = False
+                    print("[JARVIS] Live tuning rejected — reconnecting without it.")
+                    continue
+
+                # Proactive audio rejected by the server (preview API drift) —
+                # drop it and reconnect with the plain config.
+                if self._enhanced_live and (
+                    "INVALID_ARGUMENT" in err_str
+                    or "proactiv" in err_str.lower()
+                    or "Unknown name" in err_str
+                    or "unexpected keyword" in err_str
+                ):
+                    self._enhanced_live = False
+                    self.ui.write_log(
+                        "SYS: Proactive audio unavailable — reconnecting without it."
+                    )
+                    continue
+
