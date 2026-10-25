@@ -2214,3 +2214,21 @@ class JarvisLive:
                     self._conn_backoff = 0
                     continue
 
+                # A resumption handle the server will not accept — expired, or
+                # belonging to a session it has since dropped. Without this, the
+                # same dead handle would be replayed on every retry and the
+                # assistant would never come back at all: the feature meant to
+                # survive a reconnect would be the thing preventing one. Drop it
+                # once and let the next attempt start clean.
+                if _resumed_with and (
+                    "resum" in str(e).lower()
+                    or "handle" in str(e).lower()
+                    or "INVALID_ARGUMENT" in str(e)
+                    or "NOT_FOUND" in str(e)
+                ):
+                    print("[JARVIS] 🔗 Resumption handle rejected — starting a fresh session")
+                    self.ui.write_log("SYS: Could not restore the conversation — starting fresh.")
+                    self._resume_handle = None
+                    self._conn_backoff = 0
+                    continue
+
