@@ -1,6 +1,7 @@
-# 🤖 MY JARVIS(MJ)
+# 🤖 MY JARVIS(mJ)
 
 [![Python](https://img.shields.io/badge/Python-3.11%20|%203.12%20|%203.13-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE)
 [![AI Engine](https://img.shields.io/badge/Powered%20By-Google%20Gemini%20Live-orange.svg)](https://ai.google.dev/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-brightgreen.svg)](#)
 
@@ -11,17 +12,11 @@
 ## ✨ Features
 
 - **🎙️ Real-Time Voice Interaction:** Ultra-low latency two-way voice communication via Gemini Live, complete with speech echo cancellation, push-to-talk, and optional local wake word support ("*Hey Jarvis*").
-  
 - **👤 Holographic 3D Avatar & HUD:** Futuristic Iron Man-style command center with an animated 3D facial mesh rendered in software (PyQt6 + NumPy)—no heavy GPU or OpenGL required. Real-time viseme lip-sync matches speech.
-  
 - **👁️ Multimodal Vision:** Understands what's happening in real-time through live webcam feeds and screen capture/analysis.
-  
 - **⚙️ OS & Desktop Control:** Open apps, adjust volume and brightness, control open windows, manage files, and automate repetitive tasks.
-  
 - **🌐 Web & Browser Automation:** Integrated Playwright web agent for deep searches, automated browser navigation, and live information retrieval.
-  
 - **📱 Remote Mobile Dashboard:** Built-in FastAPI server allowing you to connect and control MARK-LIV from your smartphone via QR code on your local network.
-  
 - **🧠 Long-Term Memory & Plugins:** Retains conversation context and user preferences across sessions with an extensible modular plugin system (`plugins/`).
 
 ---
@@ -37,9 +32,11 @@
 Clone the repository and run the automated setup script:
 
 ```bash
--Clone the repository
+# Clone the repository
+git clone https://github.com/your-username/Mark-LIV.git
+cd Mark-LIV
 
-- Run automated dependency & browser setup
+# Run automated dependency & browser setup
 python setup.py
 ```
 
@@ -90,7 +87,3 @@ Mark-LIV/
 
 ---
 
-## 📜 License & Credits
-
-- **Creator:** Ayush Kashyap ([@Tecno_techak](https://www.youtube.com/@Tecno_techak/videos))
-- **License:** Distributed under the [Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)](LICENSE). Free for personal and educational use.
