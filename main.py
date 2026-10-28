@@ -2297,3 +2297,29 @@ class JarvisLive:
                 if len(self._session_log) >= 3:
                     asyncio.create_task(self._save_session_summary())
 
+            self.set_speaking(False)
+            self.ui.set_state("SLEEPING")
+
+            if self._dashboard:
+                await self._dashboard.broadcast({"type": "status", "state": "sleeping"})
+
+            delay = getattr(self, "_conn_backoff", 3)
+            print(f"[JARVIS] Reconnecting in {delay}s...")
+            await asyncio.sleep(delay)
+
+def main():
+    ui = JarvisUI("face.png")
+
+    def runner():
+        ui.wait_for_api_key()
+        jarvis = JarvisLive(ui)
+        try:
+            asyncio.run(jarvis.run())
+        except KeyboardInterrupt:
+            print("\n🔴 Shutting down...")
+
+    threading.Thread(target=runner, daemon=True).start()
+    ui.root.mainloop()
+
+if __name__ == "__main__":
+    main()
