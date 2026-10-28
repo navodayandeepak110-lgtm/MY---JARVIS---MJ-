@@ -5,7 +5,7 @@
 [![AI Engine](https://img.shields.io/badge/Powered%20By-Google%20Gemini%20Live-orange.svg)](https://ai.google.dev/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-brightgreen.svg)](#)
 
-> **MARK-LIV** is an Iron Man-inspired, real-time voice and multimodal AI assistant built for desktop. Powered by **Google Gemini Live**, it combines an animated holographic HUD, low-latency conversational audio, computer vision, system automation, and remote mobile control into a single unified assistant.
+> **MJ** is an Iron Man-inspired, real-time voice and multimodal AI assistant built for desktop. Powered by **Google Gemini Live**, it combines an animated holographic HUD, low-latency conversational audio, computer vision, system automation, and remote mobile control into a single unified assistant.
 
 ---
 
@@ -87,7 +87,3 @@ Mark-LIV/
 
 ---
 
-## 📜 License & Credits
-
-- **Creator:** Ayush Kashyap ([@Tecno_techak](https://www.youtube.com/@Tecno_techak/videos))
-- **License:** Distributed under the [Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)](LICENSE). Free for personal and educational use.
