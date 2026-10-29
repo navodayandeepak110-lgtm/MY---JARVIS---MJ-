@@ -146,3 +146,8 @@ def apply_ui_accent(accent_hex: str) -> bool:
         setattr(C, key, "#{:02x}{:02x}{:02x}".format(
             int(r * 255 + 0.5), int(g * 255 + 0.5), int(b * 255 + 0.5)))
     return True
+
+
+def current_palette() -> dict[str, str]:
+    """A snapshot of the accent-linked colours currently on class C."""
+    return {k: getattr(C, k) for k in _HUE_LINKED}
