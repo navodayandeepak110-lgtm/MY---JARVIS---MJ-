@@ -151,3 +151,32 @@ def apply_ui_accent(accent_hex: str) -> bool:
 def current_palette() -> dict[str, str]:
     """A snapshot of the accent-linked colours currently on class C."""
     return {k: getattr(C, k) for k in _HUE_LINKED}
+
+
+def retheme_all_widgets(old: dict[str, str], new: dict[str, str]) -> None:
+    """
+    LIVE full theme change. Replaces the old palette colours with the new ones
+    in EVERY widget's stylesheet across the app and repaints them. This way the
+    colour change applies INSTANTLY across the whole interface — panels, buttons,
+    borders included — not just the painted elements. No restart needed.
+    """
+    mapping = {old[k].lower(): new[k].lower()
+               for k in old if old[k].lower() != new.get(k, old[k]).lower()}
+    if not mapping:
+        return
+    app = QApplication.instance()
+    if app is None:
+        return
+    for w in app.allWidgets():
+        try:
+            ss = w.styleSheet()
+            if ss:
+                s2 = ss
+                for o, n in mapping.items():
+                    if o in s2:
+                        s2 = s2.replace(o, n)
+                if s2 != ss:
+                    w.setStyleSheet(s2)
+            w.update()
+        except Exception:
+            pass
