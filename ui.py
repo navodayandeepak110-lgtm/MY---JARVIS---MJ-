@@ -180,3 +180,21 @@ def retheme_all_widgets(old: dict[str, str], new: dict[str, str]) -> None:
             w.update()
         except Exception:
             pass
+
+
+def qcol(h: str, a: int = 255) -> QColor:
+    c = QColor(h); c.setAlpha(a); return c
+
+
+# ── Windows GPU via NVML DLL (no subprocess, no console window) ──────────────
+_nvml_lib: object = None   # cached ctypes DLL
+_nvml_ok:  object = None   # None=untested, True=works, False=unavailable
+
+
+def _nvml_gpu_windows() -> float:
+    """Return NVIDIA GPU utilisation % using nvml.dll directly — zero subprocess."""
+    global _nvml_lib, _nvml_ok
+    if _nvml_ok is False:
+        return -1.0
+    try:
+        import ctypes
