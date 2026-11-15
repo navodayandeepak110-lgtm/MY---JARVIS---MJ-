@@ -198,3 +198,33 @@ def _nvml_gpu_windows() -> float:
         return -1.0
     try:
         import ctypes
+
+        class _Util(ctypes.Structure):
+            _fields_ = [("gpu", ctypes.c_uint), ("memory", ctypes.c_uint)]
+
+        if _nvml_lib is None:
+            for dll_name in ("nvml", r"C:\Windows\System32\nvml.dll"):
+                try:
+                    lib = ctypes.WinDLL(dll_name)
+                    lib.nvmlInit_v2()
+                    _nvml_lib = lib
+                    break
+                except Exception:
+                    continue
+
+        if _nvml_lib is None:
+            import pynvml  # type: ignore
+            pynvml.nvmlInit()
+            h = pynvml.nvmlDeviceGetHandleByIndex(0)
+            _nvml_ok = True
+            return float(pynvml.nvmlDeviceGetUtilizationRates(h).gpu)
+
+        dev = ctypes.c_void_p()
+        _nvml_lib.nvmlDeviceGetHandleByIndex_v2(0, ctypes.byref(dev))
+        util = _Util()
+        _nvml_lib.nvmlDeviceGetUtilizationRates(dev, ctypes.byref(util))
+        _nvml_ok = True
+        return float(util.gpu)
+    except Exception:
+        _nvml_ok = False
+        return -1.0
