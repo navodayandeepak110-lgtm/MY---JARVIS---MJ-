@@ -277,3 +277,21 @@ class _SysMetrics:
             net = 0.0
         self._last_net   = nc
         self._last_net_t = now
+
+        # GPU and temperature change slowly and are the most expensive probes
+        # (NVML / WMI) — refresh them every 3rd cycle (~6 s) instead of every
+        # cycle, reusing the previous reading in between.
+        self._slow_tick = (self._slow_tick + 1) % 3
+        if self._slow_tick == 1:
+            gpu = self._get_gpu()
+            tmp = self._get_temp()
+        else:
+            gpu = self.gpu
+            tmp = self.tmp
+
+        with self._lock:
+            self.cpu = cpu
+            self.mem = mem
+            self.net = net
+            self.gpu = gpu
+            self.tmp = tmp
