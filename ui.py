@@ -261,3 +261,19 @@ class _SysMetrics:
             except Exception:
                 pass
             time.sleep(2.0)
+
+    def _update(self):
+        cpu = psutil.cpu_percent(interval=None)
+        mem = psutil.virtual_memory().percent
+
+        nc  = psutil.net_io_counters()
+        now = time.time()
+        dt  = now - self._last_net_t
+        if dt > 0:
+            sent = (nc.bytes_sent - self._last_net.bytes_sent) / dt
+            recv = (nc.bytes_recv - self._last_net.bytes_recv) / dt
+            net  = (sent + recv) / (1024 * 1024)
+        else:
+            net = 0.0
+        self._last_net   = nc
+        self._last_net_t = now
