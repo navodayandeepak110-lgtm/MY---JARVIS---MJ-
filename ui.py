@@ -253,3 +253,11 @@ class _SysMetrics:
         self._wmi_ok    = None         # None=untested, False=unavailable here
         t = threading.Thread(target=self._loop, daemon=True)
         t.start()
+
+    def _loop(self):
+        while self._running:
+            try:
+                self._update()
+            except Exception:
+                pass
+            time.sleep(2.0)
