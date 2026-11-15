@@ -228,3 +228,28 @@ def _nvml_gpu_windows() -> float:
     except Exception:
         _nvml_ok = False
         return -1.0
+
+
+class _SysMetrics:
+    def __init__(self):
+        self.cpu  = 0.0
+        self.mem  = 0.0
+        self.net  = 0.0   
+        self.gpu  = -1.0  
+        self.tmp  = -1.0  
+        self._lock = threading.Lock()
+        self._last_net = psutil.net_io_counters()
+        self._last_net_t = time.time()
+        self._running = True
+        # Probe caches — GPU (NVML) and temperature (WMI) are the expensive
+        # queries; initialise their handles once and reuse them instead of
+        # rebuilding a connection on every poll.
+        self._slow_tick = 0            # gpu/temp refreshed every 3rd cycle
+        self._pynvml    = None         # cached pynvml module + device handle
+        self._pynvml_h  = None
+        self._pynvml_ok = None         # None=untested, False=unavailable here
+        self._nv_unix   = None         # cached (lib, dev) for Linux/macOS NVML
+        self._wmi_conn  = None         # cached WMI connection (creating one is slow)
+        self._wmi_ok    = None         # None=untested, False=unavailable here
+        t = threading.Thread(target=self._loop, daemon=True)
+        t.start()
