@@ -295,3 +295,47 @@ class _SysMetrics:
             self.net = net
             self.gpu = gpu
             self.tmp = tmp
+
+    def _get_gpu(self) -> float:
+        # pynvml — subprocess-free; initialise once and reuse the handle.
+        # Re-initialising NVML on every poll is slow, so cache it and stop
+        # retrying pynvml entirely once it proves unavailable here.
+        if self._pynvml_ok is not False:
+            try:
+                if self._pynvml_h is None:
+                    import pynvml  # type: ignore
+                    pynvml.nvmlInit()
+                    self._pynvml    = pynvml
+                    self._pynvml_h  = pynvml.nvmlDeviceGetHandleByIndex(0)
+                    self._pynvml_ok = True
+                return float(self._pynvml.nvmlDeviceGetUtilizationRates(self._pynvml_h).gpu)
+            except Exception:
+                self._pynvml_ok = False
+
+        # Windows: nvml.dll via ctypes (already cached in _nvml_gpu_windows)
+        if _OS == "Windows":
+            return _nvml_gpu_windows()
+
+        # Linux / macOS: libnvidia-ml shared lib via ctypes — init once, reuse
+        try:
+            import ctypes
+
+            class _Util(ctypes.Structure):
+                _fields_ = [("gpu", ctypes.c_uint), ("memory", ctypes.c_uint)]
+
+            if self._nv_unix is None:
+                _lib = "libnvidia-ml.so.1" if _OS == "Linux" else "libnvidia-ml.dylib"
+                nv = ctypes.CDLL(_lib)
+                nv.nvmlInit_v2()
+                dev = ctypes.c_void_p()
+                nv.nvmlDeviceGetHandleByIndex_v2(0, ctypes.byref(dev))
+                self._nv_unix = (nv, dev)
+
+            nv, dev = self._nv_unix
+            u = _Util()
+            nv.nvmlDeviceGetUtilizationRates(dev, ctypes.byref(u))
+            return float(u.gpu)
+        except Exception:
+            pass
+
+        return -1.0   # N/A — zero subprocess on all platforms
