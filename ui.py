@@ -370,3 +370,13 @@ class _SysMetrics:
                 self._wmi_conn = None
 
         return -1.0   # N/A — zero subprocess on all platforms
+
+    def snapshot(self) -> dict:
+        with self._lock:
+            return {
+                "cpu": self.cpu,
+                "mem": self.mem,
+                "net": self.net,
+                "gpu": self.gpu,
+                "tmp": self.tmp,
+            }
