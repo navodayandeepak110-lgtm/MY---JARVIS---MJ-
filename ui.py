@@ -339,3 +339,34 @@ class _SysMetrics:
             pass
 
         return -1.0   # N/A — zero subprocess on all platforms
+
+    def _get_temp(self) -> float:
+        # psutil — works on Linux; occasionally Windows with driver support
+        try:
+            temps = psutil.sensors_temperatures()
+            for name in ["coretemp", "k10temp", "cpu_thermal", "acpitz",
+                         "cpu-thermal", "zenpower", "it8688"]:
+                if name in temps and temps[name]:
+                    return temps[name][0].current
+            for entries in temps.values():
+                if entries:
+                    return entries[0].current
+        except Exception:
+            pass
+
+        # Windows: wmi module (pure Python COM, zero subprocess). Reuse a single
+        # connection — building a fresh wmi.WMI() on every poll spins up a COM
+        # connection each time and is very slow. Give up after one failure.
+        if _OS == "Windows" and self._wmi_ok is not False:
+            try:
+                if self._wmi_conn is None:
+                    import wmi  # type: ignore
+                    self._wmi_conn = wmi.WMI(namespace="root/wmi")
+                tz = self._wmi_conn.MSAcpi_ThermalZoneTemperature()
+                if tz:
+                    return (tz[0].CurrentTemperature / 10.0) - 273.15
+            except Exception:
+                self._wmi_ok   = False
+                self._wmi_conn = None
+
+        return -1.0   # N/A — zero subprocess on all platforms
