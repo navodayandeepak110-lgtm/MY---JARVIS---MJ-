@@ -380,3 +380,18 @@ class _SysMetrics:
                 "gpu": self.gpu,
                 "tmp": self.tmp,
             }
+
+
+_metrics = _SysMetrics()
+
+class HudCanvas(QWidget):
+    def __init__(self, face_path: str, assistant_name: str = "J.A.R.V.I.S", parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
+        self.setMinimumSize(300, 300)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.muted    = False
+        self.speaking = False
+        self.state    = "INITIALISING"
+        self._assistant_name = assistant_name
