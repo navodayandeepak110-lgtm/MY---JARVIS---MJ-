@@ -18,5 +18,6 @@
 
 
 - **🎙️ Real-Time Voice Interaction:** Ultra-low latency two-way voice communication via Gemini Live, complete with speech echo cancellation, push-to-talk, and optional local wake word support ("*Hey Jarvis*").
+- **👤 Holographic 3D Avatar & HUD:** Futuristic Iron Man-style command center with an animated 3D facial mesh rendered in software (PyQt6 + NumPy)—no heavy GPU or OpenGL required. Real-time viseme lip-sync matches speech.
 
 
