@@ -442,3 +442,18 @@ class HudCanvas(QWidget):
         self._grid_key = None
         # Repaint throttle counter (idle frames drop to ~20 Hz — see _step()).
         self._paint_tick = 0
+
+        # Live audio reactivity: _live_amp is written from the audio threads
+        # (0.0–1.0), _amp_disp is the smoothed value the paint code reads.
+        self._live_amp  = 0.0
+        self._amp_disp  = 0.0
+        # (frames, start_time, hop) posted by the playback thread — see
+        # push_visemes(). None means "no schedule; use the plain level".
+        self._visemes = None
+        self._vis_i = None        # first schedule frame not yet handed to the mouth
+        self._base_scale = 1.0    # slow "breathing" target; amp is added per-frame
+        self._base_halo  = 55.0
+
+        self._tmr = QTimer(self)
+        self._tmr.timeout.connect(self._step)
+        self._tmr.start(16)
