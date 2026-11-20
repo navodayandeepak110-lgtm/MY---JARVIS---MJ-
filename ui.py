@@ -465,3 +465,26 @@ class HudCanvas(QWidget):
                 self._avatar.glance(dx, dy, hold)
         except Exception:
             pass
+
+    def push_visemes(self, frames, hop: float, at: float) -> None:
+        """Thread-safe: hand over a schedule of (level, openness, width) frames.
+
+        The playback thread writes up to 200 ms of audio in one go, so a single
+        averaged level would only move the mouth five times a second — enough to
+        flap, nowhere near enough to articulate. It instead posts the whole
+        slice's worth of 20 ms frames here and `_step()` plays them out against
+        the wall clock, in step with the audio going to the speakers.
+
+        `at` is the wall-clock time this batch will *begin to sound*, which the
+        caller tracks as a playback cursor. It is not the time of the call, and
+        the difference is the whole point: `stream.write` returns once the buffer
+        accepts the samples, so consecutive batches are handed over far faster
+        than they play. Anchoring each one to "now" made every batch start while
+        its predecessor was still sounding, so each schedule replaced the last
+        after a couple of frames and the mouth only ever played the opening
+        instant of every 200 ms — the reason it did not match the words.
+
+        Successive batches are therefore *appended* into one continuous
+        timeline, not swapped in. A paragraph is one schedule; the mouth stops
+        falling into a gap at every chunk boundary and having to climb back out.
+        """
