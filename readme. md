@@ -1,0 +1,23 @@
+# 🤖 MY JARVIS(mJ)
+
+
+[![Python](https://img.shields.io/badge/Python-3.11%20|%203.12%20|%203.13-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE)
+[![AI Engine](https://img.shields.io/badge/Powered%20By-Google%20Gemini%20Live-orange.svg)](https://ai.google.dev/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-brightgreen.svg)](#)
+
+
+
+> **Mj** is an Iron Man-inspired, real-time voice and multimodal AI assistant built for desktop. Powered by **Google Gemini Live**, it combines an animated holographic HUD, low-latency conversational audio, computer vision, system automation, and remote mobile control into a single unified assistant.
+
+
+---
+
+
+## ✨ Features
+
+
+- **🎙️ Real-Time Voice Interaction:** Ultra-low latency two-way voice communication via Gemini Live, complete with speech echo cancellation, push-to-talk, and optional local wake word support ("*Hey Jarvis*").
+- **👤 Holographic 3D Avatar & HUD:** Futuristic Iron Man-style command center with an animated 3D facial mesh rendered in software (PyQt6 + NumPy)—no heavy GPU or OpenGL required. Real-time viseme lip-sync matches speech.
+
+
