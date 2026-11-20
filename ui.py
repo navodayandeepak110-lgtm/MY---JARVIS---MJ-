@@ -457,3 +457,11 @@ class HudCanvas(QWidget):
         self._tmr = QTimer(self)
         self._tmr.timeout.connect(self._step)
         self._tmr.start(16)
+
+    def glance(self, dx: float, dy: float, hold: float = 1.1) -> None:
+        """Ask the avatar to look somewhere for a moment (see HoloAvatar.glance)."""
+        try:
+            if self._avatar is not None:
+                self._avatar.glance(dx, dy, hold)
+        except Exception:
+            pass
