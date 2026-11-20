@@ -395,3 +395,20 @@ class HudCanvas(QWidget):
         self.speaking = False
         self.state    = "INITIALISING"
         self._assistant_name = assistant_name
+
+        # The holographic head that fills the HUD. If it could not be imported
+        # we fall back to the old glowing core so the panel is never empty.
+        self._avatar = None
+        if HoloAvatar is not None:
+            try:
+                self._avatar = HoloAvatar()
+            except Exception:
+                self._avatar = None
+
+        # Cinematic JARVIS command-center background renderer
+        self._bg_renderer = None
+        if CinematicBackgroundRenderer is not None:
+            try:
+                self._bg_renderer = CinematicBackgroundRenderer()
+            except Exception:
+                self._bg_renderer = None
