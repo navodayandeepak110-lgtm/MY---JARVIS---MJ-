@@ -412,3 +412,33 @@ class HudCanvas(QWidget):
                 self._bg_renderer = CinematicBackgroundRenderer()
             except Exception:
                 self._bg_renderer = None
+
+        # Which centrepiece to draw. Read once here and changed live by the
+        # settings toggle; the avatar object is kept either way so switching
+        # back is instant and costs no reload.
+        try:
+            from memory.config_manager import get_hud_style
+            self.hud_style = get_hud_style()
+        except Exception:
+            self.hud_style = "face"
+        self._core_phase = 0.0
+
+        self._tick       = 0
+        self._scale      = 1.0
+        self._tgt_scale  = 1.0
+        self._halo       = 55.0
+        self._tgt_halo   = 55.0
+        self._last_t     = time.time()
+        self._step_t     = time.time()
+        self._blink      = True
+        self._blink_tick = 0
+
+        # Rescaled-face cache: the smooth rescale is expensive, so we keep the
+        # last result and only rebuild it when the (quantised) size changes.
+
+        # Static grid-dot layer, pre-rendered once per size/theme into a pixmap
+        # so paintEvent blits it in one call instead of thousands of drawPoint()s.
+        self._grid_cache: QPixmap | None = None
+        self._grid_key = None
+        # Repaint throttle counter (idle frames drop to ~20 Hz — see _step()).
+        self._paint_tick = 0
