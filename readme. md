@@ -24,3 +24,4 @@
 - **⚙️ OS & Desktop Control:** Open apps, adjust volume and brightness, control open windows, manage files, and automate repetitive tasks.
 
 - **🌐 Web & Browser Automation:** Integrated Playwright web agent for deep searches, automated browser navigation, and live information retrieval.
+- **📱 Remote Mobile Dashboard:** Built-in FastAPI server allowing you to connect and control MARK-LIV from your smartphone via QR code on your local network.
