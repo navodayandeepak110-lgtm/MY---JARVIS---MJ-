@@ -26,3 +26,13 @@
 - **🌐 Web & Browser Automation:** Integrated Playwright web agent for deep searches, automated browser navigation, and live information retrieval.
 - **📱 Remote Mobile Dashboard:** Built-in FastAPI server allowing you to connect and control MARK-LIV from your smartphone via QR code on your local network.
 - **🧠 Long-Term Memory & Plugins:** Retains conversation context and user preferences across sessions with an extensible modular plugin system (`plugins/`).
+
+
+---
+
+
+## 🚀 Quick Start
+
+
+### 1. Prerequisites
+- **Python 3.11 – 3.13** installed.
