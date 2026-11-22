@@ -36,3 +36,4 @@
 
 ### 1. Prerequisites
 - **Python 3.11 – 3.13** installed.
+- A **Google Gemini API Key** ([Get one from Google AI Studio](https://aistudio.google.com/)).
