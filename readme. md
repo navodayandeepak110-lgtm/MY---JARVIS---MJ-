@@ -55,3 +55,6 @@ cd Mark-LIV
 # Run automated dependency & browser setup
 python setup.py
 ```
+> **Note:** `setup.py` automatically detects your operating system, installs required packages, and fetches Playwright browsers.
+
+
