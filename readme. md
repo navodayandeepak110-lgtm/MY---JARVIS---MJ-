@@ -49,3 +49,9 @@ Clone the repository and run the automated setup script:
 # Clone the repository
 git clone https://github.com/your-username/Mark-LIV.git
 cd Mark-LIV
+
+
+
+# Run automated dependency & browser setup
+python setup.py
+```
