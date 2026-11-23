@@ -58,3 +58,8 @@ python setup.py
 > **Note:** `setup.py` automatically detects your operating system, installs required packages, and fetches Playwright browsers.
 
 
+### 3. Configure API Key
+
+
+Open `config/api_keys.json` and insert your Gemini API key:
+
