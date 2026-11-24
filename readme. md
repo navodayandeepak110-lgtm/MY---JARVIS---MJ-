@@ -68,3 +68,12 @@ Open `config/api_keys.json` and insert your Gemini API key:
   "gemini_api_key": "YOUR_GEMINI_API_KEY_HERE"
 }
 ```
+### 4. Launch
+
+
+Start the assistant:
+
+
+```bash
+python main.py
+```
