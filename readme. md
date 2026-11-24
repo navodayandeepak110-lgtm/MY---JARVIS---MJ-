@@ -81,3 +81,6 @@ python main.py
 
 
 ## 📂 Project Structure
+```text
+Mark-LIV/
+├── actions/        # Automated action handlers (browser, apps, desktop, vision, system)
