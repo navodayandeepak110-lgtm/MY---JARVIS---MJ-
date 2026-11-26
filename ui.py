@@ -487,4 +487,33 @@ class HudCanvas(QWidget):
         Successive batches are therefore *appended* into one continuous
         timeline, not swapped in. A paragraph is one schedule; the mouth stops
         falling into a gap at every chunk boundary and having to climb back out.
-        """
+        """        try:
+            if not frames:
+                return
+            hop = max(1e-3, float(hop))
+            at = float(at)
+            new = list(frames)
+            cur = self._visemes
+            if cur is not None:
+                old, t0, ohop = cur
+                if abs(ohop - hop) < 1e-6:
+                    # Where in the existing timeline does this batch land?
+                    i = int(round((at - t0) / hop))
+                    if 0 <= i <= len(old) + 1:
+                        # Continues (or slightly overlaps) what is already
+                        # queued: extend rather than restart. Drop whatever has
+                        # already been played so the list cannot grow without
+                        # bound over a long reply.
+                        merged = old[:i] + new
+                        played = int((time.time() - t0) / hop) - 2
+                        if played > 60:
+                            merged = merged[played:]
+                            t0 += played * hop
+                            if self._vis_i is not None:
+                                self._vis_i = max(0, self._vis_i - played)
+                        self._visemes = (merged, t0, hop)
+                        return
+            self._visemes = (new, at, hop)
+            self._vis_i = None
+        except Exception:
+            pass
