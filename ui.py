@@ -517,3 +517,18 @@ class HudCanvas(QWidget):
             self._vis_i = None
         except Exception:
             pass
+
+    def set_audio_level(self, level: float) -> None:
+        """Thread-safe entry point for the audio threads. Stores the louder of
+        the incoming level and the current value so brief gaps between chunks
+        don't make the waveform stutter; _step() decays it back down."""
+        try:
+            lv = float(level)
+        except (TypeError, ValueError):
+            return
+        if lv < 0.0:
+            lv = 0.0
+        elif lv > 1.0:
+            lv = 1.0
+        if lv > self._live_amp:
+            self._live_amp = lv
