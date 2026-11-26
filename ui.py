@@ -532,3 +532,17 @@ class HudCanvas(QWidget):
             lv = 1.0
         if lv > self._live_amp:
             self._live_amp = lv
+
+    def _make_grid(self, W: int, H: int) -> QPixmap:
+        """Pre-render the static grid-dot background into a transparent pixmap so
+        paintEvent can blit it once per frame instead of running a nested
+        drawPoint() loop across the whole widget every 16 ms."""
+        pm = QPixmap(max(1, W), max(1, H))
+        pm.fill(Qt.GlobalColor.transparent)
+        gp = QPainter(pm)
+        gp.setPen(QPen(qcol(C.PRI_GHO), 1))
+        for x in range(0, W, 48):
+            for y in range(0, H, 48):
+                gp.drawPoint(x, y)
+        gp.end()
+        return pm
