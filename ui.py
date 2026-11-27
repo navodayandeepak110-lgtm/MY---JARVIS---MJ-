@@ -598,3 +598,36 @@ class HudCanvas(QWidget):
         if self._bg_renderer is not None:
             self._bg_renderer.step(dt, amp, speaking=self.speaking,
                                    muted=self.muted, state=self.state)
+
+        if self._avatar is not None and self.hud_style == "face":
+            self._avatar.step(dt, amp, speaking=self.speaking,
+                              muted=self.muted, state=self.state,
+                              v_open=v_open, v_wide=v_wide or 0.0,
+                              v_level=v_level, v_seq=v_seq,
+                              v_hop=(sched[2] if sched is not None else 0.02))
+        else:
+            # Fallback core: slow "breathing" base target, lifted by the level.
+            if now - self._last_t > (0.12 if self.speaking else 0.5):
+                if self.speaking:
+                    self._base_scale = 1.03
+                    self._base_halo  = 122.0
+                elif self.muted:
+                    self._base_scale = random.uniform(0.998, 1.002)
+                    self._base_halo  = random.uniform(15, 28)
+                else:
+                    self._base_scale = random.uniform(1.001, 1.008)
+                    self._base_halo  = random.uniform(48, 68)
+                self._last_t = now
+
+            if self.muted:
+                self._tgt_scale, self._tgt_halo = self._base_scale, self._base_halo
+            elif self.speaking:
+                self._tgt_scale = self._base_scale + amp * 0.13
+                self._tgt_halo  = self._base_halo  + amp * 95.0
+            else:
+                self._tgt_scale = self._base_scale + amp * 0.06
+                self._tgt_halo  = self._base_halo  + amp * 75.0
+
+            sp = 0.38 if self.speaking else (0.30 if amp > 0.02 else 0.15)
+            self._scale += (self._tgt_scale - self._scale) * sp
+            self._halo  += (self._tgt_halo  - self._halo)  * sp
