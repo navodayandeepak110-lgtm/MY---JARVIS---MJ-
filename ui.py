@@ -631,3 +631,29 @@ class HudCanvas(QWidget):
             sp = 0.38 if self.speaking else (0.30 if amp > 0.02 else 0.15)
             self._scale += (self._tgt_scale - self._scale) * sp
             self._halo  += (self._tgt_halo  - self._halo)  * sp
+
+        self._blink_tick += 1
+        if self._blink_tick >= 38:
+            self._blink = not self._blink
+            self._blink_tick = 0
+            _blinked = True
+        else:
+            _blinked = False
+
+        # Repaint throttling — advancing the animation state above is cheap at
+        # 60 Hz, but the paint is heavy. Active (speaking, audio, thinking) runs
+        # at ~30 Hz, which is the frame rate animation has used for talking
+        # characters forever and is indistinguishable here; idle drops to ~20 Hz
+        # so a sleeping HUD stops pinning a CPU core. The visuals stay smooth
+        # either way because the animation state keeps stepping at 60 Hz.
+        self._paint_tick = (self._paint_tick + 1) % 6
+        active = (self.speaking or amp > 0.02
+                  or self.state in ("THINKING", "PROCESSING"))
+        if _blinked or (self._paint_tick % 2 == 0 if active
+                        else self._paint_tick % 3 == 0):
+            # Nothing is on screen when the window is hidden or minimised, so
+            # rendering the avatar into it is pure waste — and this app is meant
+            # to sit running all day. The animation state above keeps stepping,
+            # so it picks up mid-motion instead of snapping when you come back.
+            if self._on_screen():
+                self.update()
