@@ -657,3 +657,13 @@ class HudCanvas(QWidget):
             # so it picks up mid-motion instead of snapping when you come back.
             if self._on_screen():
                 self.update()
+
+    def _on_screen(self) -> bool:
+        """True only when this canvas can actually be seen by the user."""
+        try:
+            if not self.isVisible():
+                return False
+            win = self.window()
+            return not (win.isMinimized() or win.isHidden())
+        except Exception:
+            return True      # never let a visibility check stop the HUD drawing
