@@ -546,3 +546,36 @@ class HudCanvas(QWidget):
                 gp.drawPoint(x, y)
         gp.end()
         return pm
+
+    def _step(self):
+        self._tick += 1
+        now = time.time()
+
+        # ── Live audio reactivity ────────────────────────────────────────────
+        # A viseme schedule, if one is playing, gives both the level and the
+        # mouth shape for this exact instant; otherwise fall back to the peak
+        # level the audio threads pushed in.
+        v_open = v_wide = v_level = None
+        v_seq = None
+        sched = self._visemes
+        if sched is not None:
+            frames, t0, hop = sched
+            i = int((now - t0) / hop)
+            if 0 <= i < len(frames):
+                # Hand over *every* frame since the last tick, not just the one
+                # under the cursor. This timer runs at 60 Hz but the paint is
+                # throttled and the machine may be busy, so a tick can span two
+                # or three 20 ms frames — and a consonant closure is only two
+                # frames long. Sampling one and discarding the rest is how the
+                # closures between words went missing.
+                j = self._vis_i if self._vis_i is not None else i
+                v_seq = frames[max(0, j):i + 1]
+                self._vis_i = max(j, i + 1)
+                v_level, v_open, v_wide = frames[i]
+                if v_seq:
+                    peak = max(f[0] for f in v_seq)
+                    if peak > self._live_amp:
+                        self._live_amp = peak
+            elif i >= len(frames):
+                self._visemes = None        # schedule spent
+                self._vis_i = None
