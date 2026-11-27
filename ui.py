@@ -579,3 +579,22 @@ class HudCanvas(QWidget):
             elif i >= len(frames):
                 self._visemes = None        # schedule spent
                 self._vis_i = None
+
+        # Audio threads push peaks into _live_amp; decay it toward silence so
+        # gaps between chunks fade out instead of freezing, then smooth it.
+        self._live_amp *= 0.86
+        self._amp_disp += (self._live_amp - self._amp_disp) * 0.45
+        amp = self._amp_disp
+
+        # The avatar animates off the very same smoothed level the waveform
+        # uses — one audio source, so the mouth can never drift out of sync.
+        dt = now - self._step_t
+        self._step_t = now
+        # Integrated, not derived from absolute time: multiplying wall-clock by
+        # a rate that changes with state jumps the rings the instant JARVIS
+        # starts talking. Same lesson the head's sway taught.
+        self._core_phase += min(0.10, max(0.0, dt))
+
+        if self._bg_renderer is not None:
+            self._bg_renderer.step(dt, amp, speaking=self.speaking,
+                                   muted=self.muted, state=self.state)
