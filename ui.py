@@ -667,3 +667,22 @@ class HudCanvas(QWidget):
             return not (win.isMinimized() or win.isHidden())
         except Exception:
             return True      # never let a visibility check stop the HUD drawing
+
+    # ── reactor core ─────────────────────────────────────────────────────────
+    # The centrepiece for anyone who did not want a face looking back at them.
+    # Built from the same budget as the head — software QPainter, no GPU — and
+    # from the same principle: everything on it means something. The rings turn
+    # at a rate the state sets, the spectrum ring is the real audio level, and
+    # the core brightens with the voice. Nothing here is decoration that moves
+    # for its own sake, which is what made the old glowing orb feel dead.
+
+    def _core_colours(self):
+        if self.muted:
+            return qcol(C.MUTED_C), qcol(C.MUTED_C)
+        if self.speaking:
+            return qcol(C.PRI), qcol(C.ACC)
+        if self.state in ("THINKING", "PROCESSING"):
+            return qcol(C.PRI), qcol(C.ACC2)
+        if self.state == "LISTENING":
+            return qcol(C.PRI), qcol(C.GREEN)
+        return qcol(C.PRI), qcol(C.PRI_DIM)
